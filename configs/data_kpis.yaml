@@ -1,0 +1,11 @@
+data_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image"  
+train_wsi_dir: "/project/hnguyen2/mvu9/datasets/kidney_pathology_image/train/Task2_WSI_level"
+train_wsi_processed_patch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_patches/train" 
+test_wsi_dir: "/project/hnguyen2/mvu9/datasets/kidney_pathology_image/test/Task2_WSI_level"
+test_wsi_processed_patch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_patches/test" 
+val_wsi_dir: "/project/hnguyen2/mvu9/datasets/kidney_pathology_image/validation/Task2_WSI_level"
+val_wsi_processed_patch_save_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_patches/validation" 
+
+train_feature_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_features/train"
+test_feature_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_features/test"
+val_feature_dir: "/project/hnguyen2/mvu9/processing_datasets/processing_kidney_pathology_image/saved_features/validation" 
