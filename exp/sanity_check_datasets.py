@@ -43,7 +43,7 @@ def test_dataloaders(dataroot, dataset_name):
         break
 
 if __name__ == "__main__":
-    dataset_name = 'luad'
+    dataset_name = 'bcss'
     
     if dataset_name == 'luad': 
         dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized"   
