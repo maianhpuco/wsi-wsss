@@ -5,12 +5,10 @@ import torch
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT) 
 
-# Assuming the above code is in a file named 'datasets.py'
 from src.datasets import create_dataloaders
 
 def test_dataloaders():
-    # dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
-    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized" 
+    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
     print("\nTesting Stage 2 Dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(
         dataroot=dataroot,
@@ -26,11 +24,13 @@ def test_dataloaders():
         labels = batch["label"]
         labels_a = batch["label_a"]
         labels_b = batch["label_b"]
+        class_labels = batch["class_label"]
         print(f"Stage 2 Train - Images shape: {images.shape}")
         print(f"Stage 2 Train - Labels shape: {labels.shape}")
         print(f"Stage 2 Train - Labels_a shape: {labels_a.shape}")
         print(f"Stage 2 Train - Labels_b shape: {labels_b.shape}")
         print(f"Stage 2 Train - Unique classes in labels: {torch.unique(labels)}")
+        print(f"Stage 2 Train - Classification labels: {class_labels}")
         break
     
     # Val loader
@@ -43,7 +43,7 @@ def test_dataloaders():
         break
 
 if __name__ == "__main__":
-    test_dataloaders()
+    test_dataloaders() 
     
 '''    
 dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"

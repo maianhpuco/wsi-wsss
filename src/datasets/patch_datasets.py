@@ -153,7 +153,6 @@ class Stage1TrainDataset(BaseImageDataset):
         if self.transform:
             sample = self.transform(sample)
         return sample
-
 class Stage2Dataset(BaseImageDataset):
     def __init__(self, base_dir: str, split: str, transform: Optional[Any] = None):
         if split not in ["train", "val", "test"]:
@@ -183,6 +182,17 @@ class Stage2Dataset(BaseImageDataset):
                 "mask_dir": base_dir / "test" / "mask",
             }
 
+    def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
+        """Extract image-level label from filename for BCSS dataset."""
+        try:
+            label_str = fname.split("]")[0].split("[")[-1]  # e.g., "0100"
+            label = torch.tensor([int(label_str[0]), int(label_str[1]), 
+                                int(label_str[2]), int(label_str[3])])
+            return label
+        except (IndexError, ValueError):
+            print(f"Warning: Invalid label format in {fname}")
+            return None
+
     def _load_items(self) -> List[Dict]:
         items = []
         image_extensions = (".png", ".jpg", ".jpeg")
@@ -203,6 +213,12 @@ class Stage2Dataset(BaseImageDataset):
                     continue
                 item["mask_path_a"] = mask_path_a
                 item["mask_path_b"] = mask_path_b
+                # Extract classification label for train split
+                label = self._extract_label(fname)
+                if label is not None:
+                    item["class_label"] = label
+                else:
+                    continue  # Skip items with invalid labels
             items.append(item)
         return items
 
@@ -215,6 +231,7 @@ class Stage2Dataset(BaseImageDataset):
             if self.split == "train":
                 sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
                 sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
+                sample["class_label"] = item["class_label"]  # Add classification label
             elif self.split in ["val", "test"]:
                 sample["image_path"] = str(item["image_path"])
         except Exception as e:
@@ -222,8 +239,8 @@ class Stage2Dataset(BaseImageDataset):
 
         if self.transform:
             sample = self.transform(sample)
-        return sample
-
+        return sample 
+    
 def get_transform(split: str) -> transforms.Compose:
     if split == "train":
         return transforms.Compose([
