@@ -2,9 +2,11 @@
 import os
 import sys
 import torch
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT) 
 
 # Assuming the above code is in a file named 'datasets.py'
-from datasets import create_dataloaders
+from src.datasets import create_dataloaders
 
 def test_dataloaders():
     dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
