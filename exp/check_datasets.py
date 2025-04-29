@@ -9,7 +9,8 @@ sys.path.append(PROJECT_ROOT)
 from src.datasets import create_dataloaders
 
 def test_dataloaders():
-    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+    # dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized" 
     print("\nTesting Stage 2 Dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(
         dataroot=dataroot,
@@ -43,3 +44,20 @@ def test_dataloaders():
 
 if __name__ == "__main__":
     test_dataloaders()
+    
+'''    
+dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+Number of images in train: 23422
+Number of images in val: 3418
+Number of images in test: 4986
+
+Stage 2 Train - Images shape: torch.Size([16, 3, 224, 224])
+Stage 2 Train - Labels shape: torch.Size([16, 224, 224])
+Stage 2 Train - Labels_a shape: torch.Size([16, 224, 224])
+Stage 2 Train - Labels_b shape: torch.Size([16, 224, 224])
+Stage 2 Train - Unique classes in labels: tensor([0])
+
+Stage 2 Val - Images shape: torch.Size([16, 3, 224, 224])
+Stage 2 Val - Labels shape: torch.Size([16, 224, 224])
+Stage 2 Val - Unique classes in labels: tensor([0, 1, 2, 4]) 
+''' 
