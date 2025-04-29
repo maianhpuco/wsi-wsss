@@ -154,13 +154,10 @@ class Stage1TrainDataset(BaseImageDataset):
             sample = self.transform(sample)
         return sample
 class Stage2Dataset(BaseImageDataset):
-    def __init__(self, base_dir: str, split: str, dataset: str, transform: Optional[Any] = None):
+    def __init__(self, base_dir: str, split: str, transform: Optional[Any] = None):
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Invalid split: {split}")
-        if dataset not in ["luad", "bcss"]:
-            raise ValueError(f"Unsupported dataset: {dataset}")
         self.split = split
-        self.dataset = dataset  # Add dataset parameter
         self.dirs = self._set_directories(base_dir, split)
         super().__init__(self.dirs["image_dir"], transform)
         print(f"Number of images in {split}: {len(self.items)}")
@@ -186,16 +183,11 @@ class Stage2Dataset(BaseImageDataset):
             }
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
-        """Extract image-level label from filename for BCSS or LUAD dataset."""
+        """Extract image-level label from filename for BCSS dataset."""
         try:
-            label_str = fname.split("]")[0].split("[")[-1]  # e.g., "0100" for BCSS, "0 1 0 1" for LUAD
-            if self.dataset == "luad":
-                # Space-separated: [a b c d]
-                label = torch.tensor([int(x) for x in label_str.split()])
-            elif self.dataset == "bcss":
-                # No spaces: [abcd]
-                label = torch.tensor([int(label_str[0]), int(label_str[1]), 
-                                    int(label_str[2]), int(label_str[3])])
+            label_str = fname.split("]")[0].split("[")[-1]  # e.g., "0100"
+            label = torch.tensor([int(label_str[0]), int(label_str[1]), 
+                                int(label_str[2]), int(label_str[3])])
             return label
         except (IndexError, ValueError):
             print(f"Warning: Invalid label format in {fname}")
@@ -262,6 +254,7 @@ def get_transform(split: str) -> transforms.Compose:
             CustomTransforms.ToTensor,
             CustomTransforms.Normalize,
         ])
+
 def create_dataloaders(
     dataroot: str,
     dataset: str,
@@ -287,19 +280,16 @@ def create_dataloaders(
         train_dataset = Stage2Dataset(
             base_dir=dataroot,
             split="train",
-            dataset=dataset,  # Pass dataset argument
             transform=get_transform("train")
         )
         val_dataset = Stage2Dataset(
             base_dir=dataroot,
             split="val",
-            dataset=dataset,  # Pass dataset argument
             transform=get_transform("val")
         )
         test_dataset = Stage2Dataset(
             base_dir=dataroot,
             split="test",
-            dataset=dataset,  # Pass dataset argument
             transform=get_transform("val")
         )
 
@@ -325,4 +315,4 @@ def create_dataloaders(
         pin_memory=True
     )
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader 
