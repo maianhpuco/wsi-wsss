@@ -193,10 +193,14 @@ BCSS-WSSS_organized
 |       └─mask
 |       |   ├─4986 .png images
 |   ├─train
+|   |   ├─23422 .png images
 |   ├─train_PM
 |   |   ├─PM_b4_5
+|   |   |   ├─23422 .png images
 |   |   ├─PM_b5_2
+|   |   |   ├─23422 .png images
 |       └─PM_bn7
+|       |   ├─23422 .png images
     └─val
     |   ├─img
     |   |   ├─3418 .png images

@@ -1,17 +1,17 @@
+# datasets.py
 # -*- coding: utf-8 -*-
 import os
 from typing import List, Tuple, Dict, Optional, Any
 from pathlib import Path
 import torch
+import numpy as np
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
-# Placeholder for custom transforms (replace with actual implementation)
 class CustomTransforms:
     @staticmethod
     def RandomHorizontalFlip(sample: Dict) -> Dict:
-        # Example: Apply random horizontal flip to image and labels
         if torch.rand(1) > 0.5:
             sample["image"] = sample["image"].transpose(Image.FLIP_LEFT_RIGHT)
             for key in ["label", "label_a", "label_b"]:
@@ -21,33 +21,40 @@ class CustomTransforms:
 
     @staticmethod
     def RandomGaussianBlur(sample: Dict) -> Dict:
-        # Placeholder for Gaussian blur
         return sample
 
     @staticmethod
     def Normalize(sample: Dict) -> Dict:
-        # Placeholder for normalization
         sample["image"] = transforms.ToTensor()(sample["image"])
         return sample
 
     @staticmethod
+    def RGBToClassIndex(mask: Image.Image) -> np.ndarray:
+        """Convert RGB mask to class index map."""
+        palette = {
+            (255, 255, 255): 0,  # Background
+            (255, 0, 0): 1,      # TUM
+            (0, 255, 0): 2,      # STR
+            (0, 0, 255): 3,      # LYM
+            (255, 0, 255): 4     # NEC
+        }
+        mask_np = np.array(mask)
+        class_mask = np.zeros((mask_np.shape[0], mask_np.shape[1]), dtype=np.int64)
+        for rgb, class_idx in palette.items():
+            class_mask[np.all(mask_np == rgb, axis=-1)] = class_idx
+        return class_mask
+
+    @staticmethod
     def ToTensor(sample: Dict) -> Dict:
-        # Convert image and labels to tensors
         sample["image"] = transforms.ToTensor()(sample["image"])
         for key in ["label", "label_a", "label_b"]:
             if key in sample and sample[key] is not None:
-                sample[key] = torch.tensor(sample[key], dtype=torch.long)
+                class_mask = CustomTransforms.RGBToClassIndex(sample[key])
+                sample[key] = torch.tensor(class_mask, dtype=torch.long)
         return sample
 
 class BaseImageDataset(Dataset):
-    """Base dataset class for loading images and optional labels/masks."""
-    
     def __init__(self, data_path: str, transform: Optional[Any] = None):
-        """
-        Args:
-            data_path: Root directory containing images.
-            transform: Optional transform to apply to images and labels.
-        """
         self.data_path = Path(data_path)
         self.transform = transform
         self.items = self._load_items()
@@ -55,7 +62,6 @@ class BaseImageDataset(Dataset):
             raise ValueError(f"No valid items found in {data_path}")
 
     def _load_items(self) -> List[Any]:
-        """To be implemented by subclasses to load dataset items."""
         raise NotImplementedError
 
     def __len__(self) -> int:
@@ -64,10 +70,8 @@ class BaseImageDataset(Dataset):
     def __getitem__(self, index: int) -> Dict:
         raise NotImplementedError
 
-    """Dataset for inference, loading images without labels."""
-    
+class Stage1InferenceDataset(BaseImageDataset):
     def _load_items(self) -> List[Path]:
-        """Load all image file paths recursively."""
         image_extensions = (".png", ".jpg", ".jpeg")
         return [
             p for p in self.data_path.rglob("*")
@@ -75,7 +79,6 @@ class BaseImageDataset(Dataset):
         ]
 
     def __getitem__(self, index: int) -> Dict:
-        """Return image ID and transformed image."""
         image_path = self.items[index]
         try:
             image = Image.open(image_path).convert("RGB")
@@ -88,22 +91,13 @@ class BaseImageDataset(Dataset):
         return sample
 
 class Stage1TrainDataset(BaseImageDataset):
-    """Dataset for training, loading images with filename-derived labels."""
-    
     def __init__(self, data_path: str, dataset: str, transform: Optional[Any] = None):
-        """
-        Args:
-            data_path: Root directory containing images.
-            dataset: Dataset type ('luad' or 'bcss').
-            transform: Optional transform to apply to images and labels.
-        """
         self.dataset = dataset
         if dataset not in ["luad", "bcss"]:
             raise ValueError(f"Unsupported dataset: {dataset}")
         super().__init__(data_path, transform)
 
     def _load_items(self) -> List[Tuple[Path, torch.Tensor]]:
-        """Load image paths and extract labels from filenames."""
         items = []
         image_extensions = (".png", ".jpg", ".jpeg")
         for path in self.data_path.rglob("*"):
@@ -114,13 +108,11 @@ class Stage1TrainDataset(BaseImageDataset):
         return items
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
-        """Extract label from filename based on dataset type."""
         try:
             label_str = fname.split("]")[0].split("[")[-1]
             if self.dataset == "luad":
-                # Example: [a,b,c,d] -> [int(a), int(b), int(c), int(d)]
-                label = torch.tensor([int(label_str[0]), int(label_str[2]), 
-                                    int(label_str[4]), int(label_str[6])])
+                # Space-separated: [a b c d]
+                label = torch.tensor([int(x) for x in label_str.split()])
             elif self.dataset == "bcss":
                 # Example: [abcd] -> [int(a), int(b), int(c), int(d)]
                 label = torch.tensor([int(label_str[0]), int(label_str[1]), 
@@ -131,7 +123,6 @@ class Stage1TrainDataset(BaseImageDataset):
             return None
 
     def __getitem__(self, index: int) -> Dict:
-        """Return image ID, transformed image, and label."""
         image_path, label = self.items[index]
         try:
             image = Image.open(image_path).convert("RGB")
@@ -144,15 +135,7 @@ class Stage1TrainDataset(BaseImageDataset):
         return sample
 
 class Stage2Dataset(BaseImageDataset):
-    """Dataset for segmentation tasks with train/val/test splits."""
-    
     def __init__(self, base_dir: str, split: str, transform: Optional[Any] = None):
-        """
-        Args:
-            base_dir: Root directory containing train/val/test folders.
-            split: Dataset split ('train', 'val', or 'test').
-            transform: Optional transform to apply to images and masks.
-        """
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Invalid split: {split}")
         self.split = split
@@ -161,7 +144,6 @@ class Stage2Dataset(BaseImageDataset):
         print(f"Number of images in {split}: {len(self.items)}")
 
     def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
-        """Define directory paths based on split."""
         base_dir = Path(base_dir)
         if split == "train":
             return {
@@ -182,7 +164,6 @@ class Stage2Dataset(BaseImageDataset):
             }
 
     def _load_items(self) -> List[Dict]:
-        """Load image and mask file paths."""
         items = []
         image_extensions = (".png", ".jpg", ".jpeg")
         for fname in os.listdir(self.dirs["image_dir"]):
@@ -198,15 +179,14 @@ class Stage2Dataset(BaseImageDataset):
         return items
 
     def __getitem__(self, index: int) -> Dict:
-        """Return transformed image, masks, and optional image path."""
         item = self.items[index]
         try:
             image = Image.open(item["image_path"]).convert("RGB")
-            mask = Image.open(item["mask_path"])
+            mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
             sample = {"image": image, "label": mask}
             if self.split == "train":
-                sample["label_a"] = Image.open(item["mask_path_a"])
-                sample["label_b"] = Image.open(item["mask_path_b"])
+                sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
+                sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
             elif self.split in ["val", "test"]:
                 sample["image_path"] = str(item["image_path"])
         except Exception as e:
@@ -217,7 +197,6 @@ class Stage2Dataset(BaseImageDataset):
         return sample
 
 def get_transform(split: str) -> transforms.Compose:
-    """Define transformations based on dataset split."""
     if split == "train":
         return transforms.Compose([
             CustomTransforms.RandomHorizontalFlip,
@@ -238,19 +217,6 @@ def create_dataloaders(
     num_workers: int = 4,
     stage: str = "stage2"
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """
-    Create dataloaders for training, validation, and testing.
-    
-    Args:
-        dataroot: Root directory containing data.
-        dataset: Dataset type ('luad' or 'bcss') for stage1.
-        batch_size: Number of samples per batch.
-        num_workers: Number of subprocesses for data loading.
-        stage: Dataset stage ('stage1' or 'stage2').
-    
-    Returns:
-        Tuple of train, validation, and test dataloaders.
-    """
     if stage == "stage1":
         train_dataset = Stage1TrainDataset(
             data_path=os.path.join(dataroot, "train"),
@@ -298,7 +264,7 @@ def create_dataloaders(
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=1,  # Single image for testing
+        batch_size=1,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True

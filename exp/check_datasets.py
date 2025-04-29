@@ -1,64 +1,74 @@
-# import os
-# import sys 
-# from glob import glob
-# import yaml
-# import torch
-# import argparse
-# from tqdm import tqdm 
+# test_dataloaders.py
+import os
+import sys
+import torch
 
-# from PIL import Image
-# import numpy as np
-# import torch.nn.functional as F
-# import torchvision.transforms as T
-# import torchvision.transforms.functional as TF
-# from torch.utils.data import Dataset, DataLoader
-# from torchvision import transforms
-# from typing import Union, Any
-# from omegaconf import OmegaConf 
+# Assuming the above code is in a file named 'datasets.py'
+from datasets import create_dataloaders
 
-
-import os 
-import sys 
-
-import argparse 
-
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
-sys.path.append(PROJECT_ROOT)
- 
-from src.datasets import create_dataloaders 
-
-
-
-
-def main(args):
+def test_dataloaders():
+    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+    
+    # Test stage1
+    print("Testing Stage 1 Dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(
-        dataroot=args.dataroot,
-        dataset=args.dataset,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
+        dataroot=dataroot,
+        dataset="bcss",
+        batch_size=16,
+        num_workers=4,
+        stage="stage1"
+    )
+    
+    # Train loader
+    for batch in train_loader:
+        image_ids = batch["image_id"]
+        images = batch["image"]
+        labels = batch["label"]
+        print(f"Stage 1 Train - Image IDs: {image_ids}")
+        print(f"Stage 1 Train - Images shape: {images.shape}")
+        print(f"Stage 1 Train - Labels shape: {labels.shape}")
+        print(f"Stage 1 Train - Labels: {labels}")
+        break
+    
+    # Val loader
+    for batch in val_loader:
+        image_ids = batch["image_id"]
+        images = batch["image"]
+        print(f"Stage 1 Val - Image IDs: {image_ids}")
+        print(f"Stage 1 Val - Images shape: {images.shape}")
+        break
+    
+    # Test stage2
+    print("\nTesting Stage 2 Dataloaders...")
+    train_loader, val_loader, test_loader = create_dataloaders(
+        dataroot=dataroot,
+        dataset="bcss",
+        batch_size=16,
+        num_workers=4,
         stage="stage2"
     )
-        # Use in training loop
-    for batch in train_loader:
-        image_ids = batch.get("image_id", [])
-        images = batch["image"]
-        labels = batch.get("label")
-        # Process batch...  
-        print(f"Image IDs: {image_ids}")
-        print(f"Images shape: {images.shape}")
-        if labels is not None:
-            print(f"Labels shape: {labels.shape}")
-        else:
-            print("No labels in this batch.") 
-
-
     
+    # Train loader
+    for batch in train_loader:
+        images = batch["image"]
+        labels = batch["label"]
+        labels_a = batch["label_a"]
+        labels_b = batch["label_b"]
+        print(f"Stage 2 Train - Images shape: {images.shape}")
+        print(f"Stage 2 Train - Labels shape: {labels.shape}")
+        print(f"Stage 2 Train - Labels_a shape: {labels_a.shape}")
+        print(f"Stage 2 Train - Labels_b shape: {labels_b.shape}")
+        print(f"Stage 2 Train - Unique classes in labels: {torch.unique(labels)}")
+        break
+    
+    # Val loader
+    for batch in val_loader:
+        images = batch["image"]
+        labels = batch["label"]
+        print(f"Stage 2 Val - Images shape: {images.shape}")
+        print(f"Stage 2 Val - Labels shape: {labels.shape}")
+        print(f"Stage 2 Val - Unique classes in labels: {torch.unique(labels)}")
+        break
+
 if __name__ == "__main__":
-    # Example configuration
-    args = argparse.Namespace(
-        dataroot="/project/hnguyen2/mvu9/datasets/LUAD-HistoSeg",
-        dataset="luad",  # or "bcss" for stage1
-        batch_size=16,
-        num_workers=4
-    ) 
-    main(args)
+    test_dataloaders()
