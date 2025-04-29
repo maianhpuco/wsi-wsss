@@ -27,7 +27,7 @@ def reorganize_bcss_wsss(source_dir: str, target_dir: str):
     (target_dir / "docs").mkdir(exist_ok=True)
     
     # Copy train images
-    train_source = source_dir / "train"
+    train_source = source_dir / "training"
     train_target = target_dir / "train"
     train_count = 0
     # Collect all .png files (case-insensitive) in a list to reuse
