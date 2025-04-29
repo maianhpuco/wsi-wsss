@@ -160,33 +160,28 @@ Each patch is **224×224** in size at **10× magnification**.
 
 ------
 NEW FOLDER STRUCTURE
-BCSS-WSSS_organized/
-├── train/
-│   ├── *.png        # Training images (patches, weakly labeled from filenames)
-│
-├── train_PM/
-│   ├── PM_bn7/
-│   │   ├── *.png    # Placeholder masks (copied from train images)
-│   ├── PM_b5_2/
-│   │   ├── *.png    # Placeholder masks (copied from train images)
-│   ├── PM_b4_5/
-│       ├── *.png    # Placeholder masks (copied from train images)
-│
-├── val/
-│   ├── img/
-│   │   ├── *.png    # Validation images
-│   ├── mask/
-│       ├── *.png    # Validation masks (pixel-level)
-│
-├── test/
-│   ├── img/
-│   │   ├── *.png    # Test images
-│   ├── mask/
-│       ├── *.png    # Test masks (pixel-level)
-│
-├── docs/
-│   ├── Readme.txt
-│   ├── EXAMPLE_for_using_image-level_label.py
- 
 
- 
+LUAD-HistoSeg_organized
+|   ├─docs
+|       └─Readme.txt
+|   ├─test
+|   |   ├─img
+|   |   |   ├─308 .png images
+|       └─mask
+|       |   ├─307 .png images
+|   ├─train
+|   |   ├─16678 .png images
+|   ├─train_PM
+|   |   ├─PM_b4_5
+|   |   |   ├─16678 .png images
+|   |   ├─PM_b5_2
+|   |   |   ├─16678 .png images
+|       └─PM_bn7
+|       |   ├─16678 .png images
+    └─val
+    |   ├─img
+    |   |   ├─300 .png images
+        └─mask
+        |   ├─300 .png images 
+
+

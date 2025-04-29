@@ -58,7 +58,8 @@ def print_directory_tree(directory: Path, indent: str = "", prefix: str = ""):
 
 def main():
     # Example usage
-    folder_path = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized"  # Replace with your folder path
+    folder_path = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"  # Replace with your folder path 
+    # folder_path = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized"  # Replace with your folder path
     directory = Path(folder_path)
     
     if not directory.exists() or not directory.is_dir():
