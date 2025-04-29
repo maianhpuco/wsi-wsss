@@ -32,3 +32,161 @@ WSSS-Tissue/
 reference repo: 
 [9]WSSS-Tissue:  https://github.com/ChuHan89/WSSS-Tissue 
 
+# 📄 Dataset Summaries
+
+## BCSS-WSSS Dataset
+
+**BCSS-WSSS** is a weakly-supervised tissue semantic segmentation dataset based on the Breast Cancer Semantic Segmentation (BCSS) dataset.
+
+- **Task**: Patch-level classification and pixel-level segmentation.
+- **Tissue Categories**:
+  - Tumor (TUM)
+  - Stroma (STR)
+  - Lymphocytic infiltrate (LYM)
+  - Necrosis (NEC)
+
+### 📂 Folder Structure
+
+| Split | Path | Notes |
+|:---|:---|:---|
+| **Train** | `_train/annotations/` | - Patch-level labels embedded in filenames<br>- Total patches: **23,422** |
+| **Validation** | `_val/` (`_img/` and `_mask/`) | - Pixel-level segmentation masks<br>- Total patches: **3,418** |
+| **Test** | `_test/` (`_img/` and `_mask/`) | - Pixel-level segmentation masks<br>- Total patches: **4,986** |
+
+Other files:
+- `_Readme.txt`
+- `_Example_for_using_image_level_label.py`
+
+### 🏷️ Naming Convention (Training Set)
+
+```
+Image-name-of-BCSS + '+' + index + '[' + abcd + '].png
+```
+- Example:  
+  `TCGA-A1-A0SK-DX1_xmin45749_ymin25055_MPP-0.2500+[1101].png`
+
+Where:
+- `a`: Tumor (TUM)
+- `b`: Stroma (STR)
+- `c`: Lymphocyte (LYM)
+- `d`: Necrosis (NEC)
+
+Each patch is **224×224** in size.
+
+### 🎨 Palette (Validation/Test Masks)
+
+| Label | Value | RGB Color |
+|:---|:---|:---|
+| Background | 0 | Black |
+| Tumor (TUM) | 1 | `[255, 0, 0]` |
+| Stroma (STR) | 2 | `[0, 255, 0]` |
+| Lymphocyte (LYM) | 3 | `[0, 0, 255]` |
+| Necrosis (NEC) | 4 | `[255, 255, 0]` |
+
+---
+
+## LUAD-HistoSeg Dataset
+
+**LUAD-HistoSeg** is a weakly-supervised tissue semantic segmentation dataset based on lung adenocarcinoma histology slides.
+
+- **Task**: Patch-level classification and pixel-level segmentation.
+- **Tissue Categories**:
+  - Tumor epithelial (TE)
+  - Tumor-associated stroma (TAS)
+  - Lymphocyte (LYM)
+  - Necrosis (NEC)
+
+### 📂 Folder Structure
+
+| Split | Path | Notes |
+|:---|:---|:---|
+| **Train** | `_training/` | - Patch-level labels embedded in filenames<br>- Total patches: **16,678** |
+| **Validation** | `_val/` (`_img/` and `_mask/`) | - Pixel-level segmentation masks<br>- Total patches: **300** |
+| **Test** | `_test/` (`_img/` and `_mask/`) | - Pixel-level segmentation masks<br>- Total patches: **307** |
+
+Other files:
+- `_Readme.txt`
+- `_Example_for_using_image_level_label.py`
+
+### 🏷️ Naming Convention (Training Set)
+
+```
+patient_ID + '_' + x-axis + '-' + y-axis + '[' + a b c d + '].png
+```
+- Example:  
+  `1031280-2300-27920-[1 0 0 1].png`
+
+Where:
+- `a`: Tumor epithelial (TE)
+- `b`: Necrosis (NEC)
+- `c`: Lymphocyte (LYM)
+- `d`: Tumor-associated stroma (TAS)
+
+Each patch is **224×224** in size at **10× magnification**.
+
+### 🎨 Palette (Validation/Test Masks)
+
+| Label | Value | RGB Color |
+|:---|:---|:---|
+| Tumor epithelial (TE) | 0–2 | `[205, 51, 51]` |
+| Necrosis (NEC) | 3–5 | `[0, 255, 0]` |
+| Lymphocyte (LYM) | 6–8 | `[65, 105, 225]` |
+| Tumor-associated stroma (TAS) | 9–12 | `[255, 165, 0]` |
+| Background (Exclude) | 12–15 | `[255, 255, 255]` |
+
+---
+
+# 🔥 Quick Comparison
+
+| Aspect | BCSS-WSSS | LUAD-HistoSeg |
+|:---|:---|:---|
+| Disease | Breast Cancer | Lung Adenocarcinoma |
+| Label Extraction | `[abcd]` in filename | `[a b c d]` in filename |
+| Training Crop | Sliding window | Random anchor points |
+| Magnification | ~20× | 10× |
+| Patch Size | 224×224 | 224×224 |
+| Categories | TUM, STR, LYM, NEC | TE, TAS, LYM, NEC |
+
+---
+
+# 📌 Notes
+- Training sets are **weakly-labeled** (from filenames).
+- Validation and Test sets are **pixel-labeled** (ground truth masks).
+- Example scripts are provided to handle patch-level labels.
+
+---
+
+# ✅ End of Summary
+
+------
+NEW FOLDER STRUCTURE
+BCSS-WSSS_organized/
+├── train/
+│   ├── *.png        # Training images (patches, weakly labeled from filenames)
+│
+├── train_PM/
+│   ├── PM_bn7/
+│   │   ├── *.png    # Placeholder masks (copied from train images)
+│   ├── PM_b5_2/
+│   │   ├── *.png    # Placeholder masks (copied from train images)
+│   ├── PM_b4_5/
+│       ├── *.png    # Placeholder masks (copied from train images)
+│
+├── val/
+│   ├── img/
+│   │   ├── *.png    # Validation images
+│   ├── mask/
+│       ├── *.png    # Validation masks (pixel-level)
+│
+├── test/
+│   ├── img/
+│   │   ├── *.png    # Test images
+│   ├── mask/
+│       ├── *.png    # Test masks (pixel-level)
+│
+├── docs/
+│   ├── Readme.txt
+│   ├── EXAMPLE_for_using_image-level_label.py
+ 
+
+ 

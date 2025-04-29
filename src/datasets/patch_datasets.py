@@ -64,7 +64,6 @@ class BaseImageDataset(Dataset):
     def __getitem__(self, index: int) -> Dict:
         raise NotImplementedError
 
-class Stage1InferenceDataset(BaseImageDataset):
     """Dataset for inference, loading images without labels."""
     
     def _load_items(self) -> List[Path]:
