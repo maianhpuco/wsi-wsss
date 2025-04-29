@@ -184,4 +184,21 @@ LUAD-HistoSeg_organized
         └─mask
         |   ├─300 .png images 
 
-
+BCSS-WSSS_organized
+|   ├─docs
+|       └─Readme.txt
+|   ├─test
+|   |   ├─img
+|   |   |   ├─4986 .png images
+|       └─mask
+|       |   ├─4986 .png images
+|   ├─train
+|   ├─train_PM
+|   |   ├─PM_b4_5
+|   |   ├─PM_b5_2
+|       └─PM_bn7
+    └─val
+    |   ├─img
+    |   |   ├─3418 .png images
+        └─mask
+        |   ├─3418 .png images
