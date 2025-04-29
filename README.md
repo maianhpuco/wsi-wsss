@@ -25,3 +25,10 @@ WSSS-Tissue/
 
 
 ### Slide-level dataset:
+
+
+
+
+reference repo: 
+[9]WSSS-Tissue:  https://github.com/ChuHan89/WSSS-Tissue 
+

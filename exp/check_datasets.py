@@ -31,16 +31,6 @@ from src.datasets import create_dataloaders
 
 
 def main(args):
-    # Create dataloaders for stage1
-    # train_loader, val_loader, test_loader = create_dataloaders(
-    #     dataroot=args.dataroot,
-    #     dataset=args.dataset,
-    #     batch_size=args.batch_size,
-    #     num_workers=args.num_workers,
-    #     stage="stage1"
-    # )
-
-    # Or for stage2
     train_loader, val_loader, test_loader = create_dataloaders(
         dataroot=args.dataroot,
         dataset=args.dataset,
