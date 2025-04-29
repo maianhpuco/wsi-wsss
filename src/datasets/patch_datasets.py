@@ -21,11 +21,9 @@ class CustomTransforms:
 
     @staticmethod
     def RandomGaussianBlur(sample: Dict) -> Dict:
-        return sample
-
-    @staticmethod
-    def Normalize(sample: Dict) -> Dict:
-        sample["image"] = transforms.ToTensor()(sample["image"])
+        if torch.rand(1) > 0.5:
+            blur = transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 2.0))
+            sample["image"] = blur(sample["image"])
         return sample
 
     @staticmethod
@@ -46,11 +44,20 @@ class CustomTransforms:
 
     @staticmethod
     def ToTensor(sample: Dict) -> Dict:
+        """Convert image and labels to tensors."""
         sample["image"] = transforms.ToTensor()(sample["image"])
         for key in ["label", "label_a", "label_b"]:
             if key in sample and sample[key] is not None:
                 class_mask = CustomTransforms.RGBToClassIndex(sample[key])
                 sample[key] = torch.tensor(class_mask, dtype=torch.long)
+        return sample
+
+    @staticmethod
+    def Normalize(sample: Dict) -> Dict:
+        """Apply normalization to the image tensor."""
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                                       std=[0.229, 0.224, 0.225])
+        sample["image"] = normalize(sample["image"])
         return sample
 
 class BaseImageDataset(Dataset):
@@ -111,10 +118,8 @@ class Stage1TrainDataset(BaseImageDataset):
         try:
             label_str = fname.split("]")[0].split("[")[-1]
             if self.dataset == "luad":
-                # Space-separated: [a b c d]
                 label = torch.tensor([int(x) for x in label_str.split()])
             elif self.dataset == "bcss":
-                # Example: [abcd] -> [int(a), int(b), int(c), int(d)]
                 label = torch.tensor([int(label_str[0]), int(label_str[1]), 
                                     int(label_str[2]), int(label_str[3])])
             return label
@@ -171,10 +176,18 @@ class Stage2Dataset(BaseImageDataset):
                 continue
             image_path = self.dirs["image_dir"] / fname
             mask_path = self.dirs["mask_dir"] / fname
+            if not mask_path.exists():
+                print(f"Warning: Mask not found for {image_path}, skipping...")
+                continue
             item = {"image_path": image_path, "mask_path": mask_path}
             if self.split == "train":
-                item["mask_path_a"] = self.dirs["mask_dir_a"] / fname
-                item["mask_path_b"] = self.dirs["mask_dir_b"] / fname
+                mask_path_a = self.dirs["mask_dir_a"] / fname
+                mask_path_b = self.dirs["mask_dir_b"] / fname
+                if not mask_path_a.exists() or not mask_path_b.exists():
+                    print(f"Warning: Additional masks not found for {image_path}, skipping...")
+                    continue
+                item["mask_path_a"] = mask_path_a
+                item["mask_path_b"] = mask_path_b
             items.append(item)
         return items
 
@@ -201,13 +214,13 @@ def get_transform(split: str) -> transforms.Compose:
         return transforms.Compose([
             CustomTransforms.RandomHorizontalFlip,
             CustomTransforms.RandomGaussianBlur,
-            CustomTransforms.Normalize,
             CustomTransforms.ToTensor,
+            CustomTransforms.Normalize,
         ])
     else:  # val or test
         return transforms.Compose([
-            CustomTransforms.Normalize,
             CustomTransforms.ToTensor,
+            CustomTransforms.Normalize,
         ])
 
 def create_dataloaders(
@@ -270,4 +283,4 @@ def create_dataloaders(
         pin_memory=True
     )
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader 
