@@ -30,7 +30,11 @@ def reorganize_bcss_wsss(source_dir: str, target_dir: str):
     train_source = source_dir / "train"
     train_target = target_dir / "train"
     train_count = 0
-    for img_path in train_source.glob("*.png"):
+    # Collect all .png files (case-insensitive) in a list to reuse
+    train_images = [img_path for img_path in train_source.iterdir() if img_path.is_file() and img_path.suffix.lower() == ".png"]
+    print(f"Found {len(train_images)} .png images in {train_source}")
+    
+    for img_path in train_images:
         shutil.copy(img_path, train_target / img_path.name)
         train_count += 1
         print(f"Copied {img_path} to {train_target / img_path.name}")
@@ -83,12 +87,12 @@ def reorganize_bcss_wsss(source_dir: str, target_dir: str):
     print(f"Total documentation files copied: {doc_count}")
 
     # Placeholder for train_PM directories (temporary workaround)
-    # Since train_PM is missing, copy train images as placeholder masks
+    # Use the same list of train images to copy to train_PM subdirectories
     (target_dir / "train_PM" / "PM_bn7").mkdir(parents=True, exist_ok=True)
     (target_dir / "train_PM" / "PM_b5_2").mkdir(parents=True, exist_ok=True)
     (target_dir / "train_PM" / "PM_b4_5").mkdir(parents=True, exist_ok=True)
     train_pm_counts = {"PM_bn7": 0, "PM_b5_2": 0, "PM_b4_5": 0}
-    for img_path in train_source.glob("*.png"):
+    for img_path in train_images:  # Reuse the same list of train images
         for subdir in ["PM_bn7", "PM_b5_2", "PM_b4_5"]:
             shutil.copy(img_path, target_dir / "train_PM" / subdir / img_path.name)
             train_pm_counts[subdir] += 1
