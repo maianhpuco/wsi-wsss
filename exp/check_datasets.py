@@ -12,7 +12,7 @@ def test_dataloaders(dataroot):
     print("\nTesting Stage 2 Dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(
         dataroot=dataroot,
-        dataset="bcss",
+        dataset="luad",
         batch_size=16,
         num_workers=4,
         stage="stage2"

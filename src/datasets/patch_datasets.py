@@ -262,6 +262,7 @@ def get_transform(split: str) -> transforms.Compose:
             CustomTransforms.ToTensor,
             CustomTransforms.Normalize,
         ])
+        
 def create_dataloaders(
     dataroot: str,
     dataset: str,
