@@ -7,8 +7,8 @@ sys.path.append(PROJECT_ROOT)
 
 from src.datasets import create_dataloaders
 
-def test_dataloaders():
-    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+def test_dataloaders(dataroot):
+
     print("\nTesting Stage 2 Dataloaders...")
     train_loader, val_loader, test_loader = create_dataloaders(
         dataroot=dataroot,
@@ -43,7 +43,9 @@ def test_dataloaders():
         break
 
 if __name__ == "__main__":
-    test_dataloaders() 
+    # dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
+    dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized"  
+    test_dataloaders(dataroot)
     
 '''    
 dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"
