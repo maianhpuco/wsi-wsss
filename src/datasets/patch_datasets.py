@@ -28,7 +28,21 @@ class CustomTransforms:
 
     @staticmethod
     def RGBToClassIndex(mask: Image.Image) -> np.ndarray:
-        """Convert RGB mask to class index map."""
+        """Convert mask to class index map (handles both RGB and indexed masks)."""
+        mask_np = np.array(mask)
+
+        # Check if mask is single-channel (indexed)
+        if mask_np.ndim == 2:
+            # Assume values are already class indices (0 to 4)
+            class_mask = mask_np.astype(np.int64)
+            # Validate class indices
+            valid_classes = set(range(5))  # Classes 0 to 4
+            unique_classes = set(np.unique(class_mask))
+            if not unique_classes.issubset(valid_classes):
+                raise ValueError(f"Invalid class indices in mask: {unique_classes}")
+            return class_mask
+
+        # Otherwise, assume RGB mask
         palette = {
             (255, 255, 255): 0,  # Background
             (255, 0, 0): 1,      # TUM
@@ -36,7 +50,8 @@ class CustomTransforms:
             (0, 0, 255): 3,      # LYM
             (255, 0, 255): 4     # NEC
         }
-        mask_np = np.array(mask)
+        if mask_np.shape[-1] != 3:
+            raise ValueError(f"Expected RGB mask with shape (H, W, 3), got shape {mask_np.shape}")
         class_mask = np.zeros((mask_np.shape[0], mask_np.shape[1]), dtype=np.int64)
         for rgb, class_idx in palette.items():
             class_mask[np.all(mask_np == rgb, axis=-1)] = class_idx
