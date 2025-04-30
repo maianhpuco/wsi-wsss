@@ -352,36 +352,38 @@ def create_dataloaders(
 
 #=============Indice Dataloaders================= 
 class Stage2IndiceDataset(Dataset):
-    def __init__(self, base_dir: str, split: str, dataset: str):
-        if split not in ["train", "val", "test"]:
-            raise ValueError(f"Invalid split: {split}")
-        if dataset not in ["luad", "bcss"]:
-            raise ValueError(f"Unsupported dataset: {dataset}")
-        self.split = split
-        self.dataset = dataset
-        self.dirs = self._set_directories(base_dir, split)
-        self.items = self._load_items()
-        print(f"Number of items in {split}: {len(self.items)}")
+    def __init__(self, indices_base: str, masks_base: str, split: str, dataset: str):
+            if split not in ["train", "val", "test"]:
+                raise ValueError(f"Invalid split: {split}")
+            if dataset not in ["luad", "bcss"]:
+                raise ValueError(f"Unsupported dataset: {dataset}")
+            self.split = split
+            self.dataset = dataset
+            self.dirs = self._set_directories(indices_base, masks_base, split)
+            self.items = self._load_items()
+            print(f"Number of items in {split}: {len(self.items)}") 
+        
+    def _set_directories(self, indices_base: str, masks_base: str, split: str) -> Dict[str, Path]:
+        indices_base = Path(indices_base)
+        masks_base = Path(masks_base)
 
-    def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
-        base_dir = Path(base_dir)
         if split == "train":
             return {
-                "indices_dir": base_dir / "train" / "indices",
-                "mask_dir": base_dir / "train_PM" / "PM_bn7",
-                "mask_dir_a": base_dir / "train_PM" / "PM_b5_2",
-                "mask_dir_b": base_dir / "train_PM" / "PM_b4_5",
+                "indices_dir": indices_base / "train" / "indices",
+                "mask_dir": masks_base / "train_PM" / "PM_bn7",
+                "mask_dir_a": masks_base / "train_PM" / "PM_b5_2",
+                "mask_dir_b": masks_base / "train_PM" / "PM_b4_5",
             }
         elif split == "val":
             return {
-                "indices_dir": base_dir / "val" / "img" / "indices",
-                "mask_dir": base_dir / "val" / "mask",
+                "indices_dir": indices_base / "val" / "indices",
+                "mask_dir": masks_base / "val" / "mask",
             }
-        else:  # test
+        else:
             return {
-                "indices_dir": base_dir / "test" / "img" / "indices",
-                "mask_dir": base_dir / "test" / "mask",
-            }
+                "indices_dir": indices_base / "test" / "indices",
+                "mask_dir": masks_base / "test" / "mask",
+            } 
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
         # Extract label from filename, e.g., "a_b_c_d.png"
@@ -444,7 +446,8 @@ class Stage2IndiceDataset(Dataset):
         return sample
 
 def create_indice_dataloaders(
-    dataroot: str,
+    indice_root: str,
+    mask_root: str,
     dataset: str,
     batch_size: int,
     num_workers: int = 4,
@@ -454,41 +457,27 @@ def create_indice_dataloaders(
         raise ValueError("Stage2IndiceDataset is only for stage2")
 
     train_dataset = Stage2IndiceDataset(
-        base_dir=dataroot,
+        indices_base=indice_root,
+        masks_base=mask_root,
         split="train",
         dataset=dataset,
     )
     val_dataset = Stage2IndiceDataset(
-        base_dir=dataroot,
+        indices_base=indice_root,
+        masks_base=mask_root,
         split="val",
         dataset=dataset,
     )
     test_dataset = Stage2IndiceDataset(
-        base_dir=dataroot,
+        indices_base=indice_root,
+        masks_base=mask_root,
         split="test",
         dataset=dataset,
     )
 
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True
-    )
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=1,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True
-    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader, test_loader
+#=============End: Indice Dataloaders================= s

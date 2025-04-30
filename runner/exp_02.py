@@ -51,10 +51,18 @@ def main():
     args.is_gumbel = config_file.is_gumbel
     
     args.use_indices = True 
-    if args.use_indices == True:
-        args.data_dir.replace("_organized", "_indice")
-        
-     
+            
+    if args.use_indices:
+        indice_root = args.data_dir.replace("_organized", "_indice")
+        mask_root = args.data_dir  # still from _organized
+        train_loader, val_loader, test_loader = create_indice_dataloaders(
+            indice_root, mask_root, dataset=args.dataset_name, batch_size=args.batch_size
+        )
+    else:
+        train_loader, val_loader, test_loader = create_dataloaders(
+            dataroot=args.data_dir, dataset=args.dataset_name, batch_size=args.batch_size
+        )
+ 
     DEVICE = torch.device(args.device)
 
     #=================Start: Load VQ-GAN model=================
