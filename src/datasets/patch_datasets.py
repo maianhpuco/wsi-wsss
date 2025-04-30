@@ -289,7 +289,7 @@ class Stage2Dataset(BaseImageDataset):
                 "image_dir": base_dir / "val" / "img",
                 "mask_dir": base_dir / "val" / "mask",
             }
-        else:  # test
+        elif split == "test":
             return {
                 "image_dir": base_dir / "test" / "img",
                 "mask_dir": base_dir / "test" / "mask",
@@ -322,9 +322,9 @@ class Stage2Dataset(BaseImageDataset):
             if not mask_path.exists():
                 print(f"Warning: Mask not found for {image_path}, skipping...")
                 print(f"Mask lookup: {mask_path}") 
-                return 
+                # return 
             #==================End: Mask not found================= 
-                continue
+                # continue
             item = {"image_path": image_path, "mask_path": mask_path}
             if self.split == "train":
                 mask_path_a = self.dirs["mask_dir_a"] / fname
@@ -396,7 +396,7 @@ def create_dataloaders(
         )
         test_dataset = Stage1InferenceDataset(
             data_path=os.path.join(dataroot, "test"),
-            transform=get_transform("val")
+            transform=get_transform("test")
         )
     else:  # stage2
         train_dataset = Stage2Dataset(
@@ -415,7 +415,7 @@ def create_dataloaders(
             base_dir=dataroot,
             split="test",
             dataset=dataset,  # Pass dataset argument
-            transform=get_transform("val")
+            transform=get_transform("test")
         )
     # Apply subset sampling if subset_ratio < 1.0
     if subset_ratio < 1.0:

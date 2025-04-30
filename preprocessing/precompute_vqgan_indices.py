@@ -53,13 +53,15 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
         stage="stage2"
     )
 
-    for split, loader in [("train", train_loader), ("val", val_loader), ("test", test_loader)]:
+    # for split, loader in [("train", train_loader), ("val", val_loader), ("test", test_loader)]:
+    for split, loader in [("test", test_loader)]:
         print(f"\nProcessing split: {split}")
         
         # Create output directory
         output_dir = os.path.join(output_dir_root, split, "indices")
         if split != "train":
             output_dir = os.path.join(output_dir_root, split, "img", "indices")
+            print(f"Output directory: {output_dir}") 
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)  # Remove existing directory and all contents
         os.makedirs(output_dir)        # Create a fresh directory 
