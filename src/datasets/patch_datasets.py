@@ -231,25 +231,45 @@ class Stage2Dataset(BaseImageDataset):
                     continue  # Skip items with invalid labels
             items.append(item)
         return items
-
     def __getitem__(self, index: int) -> Dict:
         item = self.items[index]
         try:
             image = Image.open(item["image_path"]).convert("RGB")
             mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
-            sample = {"image": image, "label": mask}
+            sample = {
+                "image": image,
+                "label": mask,
+                "image_path": str(item["image_path"])  # ✅ always include this
+            }
             if self.split == "train":
                 sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
                 sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
-                sample["class_label"] = item["class_label"]  # Add classification label
-            elif self.split in ["val", "test"]:
-                sample["image_path"] = str(item["image_path"])
+                sample["class_label"] = item["class_label"]
         except Exception as e:
             raise RuntimeError(f"Failed to load item {item}: {e}")
 
         if self.transform:
             sample = self.transform(sample)
         return sample 
+    
+    # def __getitem__(self, index: int) -> Dict:
+    #     item = self.items[index]
+    #     try:
+    #         image = Image.open(item["image_path"]).convert("RGB")
+    #         mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
+    #         sample = {"image": image, "label": mask}
+    #         if self.split == "train":
+    #             sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
+    #             sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
+    #             sample["class_label"] = item["class_label"]  # Add classification label
+    #         elif self.split in ["val", "test"]:
+    #             sample["image_path"] = str(item["image_path"])
+    #     except Exception as e:
+    #         raise RuntimeError(f"Failed to load item {item}: {e}")
+
+    #     if self.transform:
+    #         sample = self.transform(sample)
+    #     return sample 
     
 def get_transform(split: str) -> transforms.Compose:
     if split == "train":
