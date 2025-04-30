@@ -1,7 +1,7 @@
 # wsi-wsss
 
 install taming model 
-
+conda env update --file src/includes/taming-transformers/environment.yaml  --name wsi-wsss 
 
 
 ### Patch-level dataset:
