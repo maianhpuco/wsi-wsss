@@ -76,6 +76,8 @@ def main():
         num_workers=4,
         stage="stage2"
     )
+    
+    print("Sanity check dataloaders...") 
     for batch in train_loader:
         images = batch["image"]
         labels = batch["label"]
@@ -96,19 +98,20 @@ def main():
         num_classes=4,  # Multi-label classification for classes 1-4 (TUM, STR, LYM, NEC)
         patch_size=14  # 224/16 ≈ 14 patches per dimension for timm's ViT
     ).to(DEVICE)
+    
 
     # Optimizer
-    # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # Train the model
-    # train(
-    #     model=model,
-    #     train_loader=train_loader,
-    #     val_loader=val_loader,
-    #     optimizer=optimizer,
-    #     num_epochs=args.num_epochs,
-    #     device=DEVICE
-    # )
+    train(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=optimizer,
+        num_epochs=args.num_epochs,
+        device=DEVICE
+    )
 
 if __name__ == "__main__":
     main()
