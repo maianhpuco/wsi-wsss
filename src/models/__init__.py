@@ -1,5 +1,5 @@
-from .vqgan_classifier import VQGANViTClassifier 
+from .vqgan_classifier import VQGANProcessor, ViTClassifier 
 
 __all__ = [
-    VQGANViTClassifier
+    VQGANProcessor, ViTClassifier 
 ] 

@@ -1,9 +1,10 @@
 # precompute_indices.py
 
 import os
+import shutil 
 import torch
 from src.datasets import create_dataloaders
-from model import VQGANProcessor
+from src.models import VQGANProcessor
 from utils import load_config
 
 def load_vqgan(config, ckpt_path=None, is_gumbel=False):
@@ -35,14 +36,21 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
     # Set default output root
     if output_dir_root is None:
         output_dir_root = data_dir.replace("_organized", "_indice")
-
-    for split in ["train", "val"]:
-        print(f"\n🔹 Processing split: {split}")
+    
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)  # Remove existing directory and all contents
+    os.makedirs(output_dir)        # Create a fresh directory 
+    
+    for split in ["train", "val", "test"]:
+        print(f"\n Processing split: {split}")
         
         # Create output directory
         output_dir = os.path.join(output_dir_root, split, "indices")
-        os.makedirs(output_dir, exist_ok=True)
-
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)  # Remove existing directory and all contents
+        os.makedirs(output_dir)        # Create a fresh directory 
+        
+         
         # Load appropriate dataloader
         train_loader, val_loader, _ = create_dataloaders(
             dataroot=data_dir,
