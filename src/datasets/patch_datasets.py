@@ -382,7 +382,8 @@ def create_dataloaders(
     dataset: str,
     batch_size: int,
     num_workers: int = 4,
-    stage: str = "stage2"
+    stage: str = "stage2", 
+    subset_ratio: float = 1.0  # Default to using the full dataset 
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     if stage == "stage1":
         train_dataset = Stage1TrainDataset(
