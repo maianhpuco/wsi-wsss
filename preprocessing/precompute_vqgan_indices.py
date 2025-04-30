@@ -74,6 +74,7 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
 
             for i, idx in enumerate(indices):
                 image_path = batch["image_path"][i]  # Should be string 
+                print(i, image_path)
                 try:
                     image_path = batch["image_path"][i]  # Should be string
                     print(i, image_path) 
