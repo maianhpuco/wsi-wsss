@@ -1,8 +1,10 @@
 # wsi-wsss
 
 install taming model 
-conda env update --file src/includes/taming-transformers/environment.yaml  --name wsi-wsss 
-
+python 3.10 
+conda env update --file src/includes/taming-transformers/environment.yaml  --name wsi-safe 
+pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
+ 
 
 ### Patch-level dataset:
 Datasets will be unpacked here.
