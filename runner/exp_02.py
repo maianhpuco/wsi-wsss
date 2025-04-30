@@ -48,9 +48,12 @@ def main():
     args.batch_size = config_file.batch_size 
     args.num_epochs = config_file.num_epochs 
     args.learning_rate = config_file.learning_rate 
-    args.is_gumbel = config_file.is_gumbel 
-    args.use_indices = True 
+    args.is_gumbel = config_file.is_gumbel
     
+    args.use_indices = True 
+    if args.use_indices == True:
+        args.data_dir.replace("_organized", "_indice")
+        
      
     DEVICE = torch.device(args.device)
 
