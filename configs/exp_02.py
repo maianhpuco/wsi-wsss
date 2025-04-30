@@ -3,7 +3,7 @@ is_gumbel = True
 dataset_name= 'bcss'  # 'bcss' or 'luad' 
 
 batch_size = 16
-num_epochs = 50
+num_epochs = 2
 learning_rate = 1e-4 
 
 
