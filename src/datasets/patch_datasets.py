@@ -349,3 +349,171 @@ def create_dataloaders(
     )
 
     return train_loader, val_loader, test_loader
+
+#=============Indice Dataloaders================= 
+
+# In src/datasets.py, update Stage2Dataset
+class Stage2IndiceDataset(BaseImageDataset):
+    def __init__(self, base_dir: str, split: str, dataset: str, transform: Optional[Any] = None, use_indices=False):
+        if split not in ["train", "val", "test"]:
+            raise ValueError(f"Invalid split: {split}")
+        if dataset not in ["luad", "bcss"]:
+            raise ValueError(f"Unsupported dataset: {dataset}")
+        self.split = split
+        self.dataset = dataset
+        self.use_indices = use_indices
+        self.dirs = self._set_directories(base_dir, split)
+        super().__init__(self.dirs["image_dir"], transform)
+        print(f"Number of images in {split}: {len(self.items)}")
+
+    def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
+        base_dir = Path(base_dir)
+        if split == "train":
+            return {
+                "image_dir": base_dir / "train",
+                "mask_dir": base_dir / "train_PM" / "PM_bn7",
+                "mask_dir_a": base_dir / "train_PM" / "PM_b5_2",
+                "mask_dir_b": base_dir / "train_PM" / "PM_b4_5",
+                "indices_dir": base_dir / "train" / "indices",
+            }
+        elif split == "val":
+            return {
+                "image_dir": base_dir / "val" / "img",
+                "mask_dir": base_dir / "val" / "mask",
+                "indices_dir": base_dir / "val" / "img" / "indices",
+            }
+        else:  # test
+            return {
+                "image_dir": base_dir / "test" / "img",
+                "mask_dir": base_dir / "test" / "mask",
+                "indices_dir": base_dir / "test" / "img" / "indices",
+            }
+
+    def _load_items(self) -> List[Dict]:
+        items = []
+        image_extensions = (".png", ".jpg", ".jpeg")
+        for fname in os.listdir(self.dirs["image_dir"]):
+            if fname.startswith(".") or not fname.lower().endswith(image_extensions):
+                continue
+            image_path = self.dirs["image_dir"] / fname
+            mask_path = self.dirs["mask_dir"] / fname
+            if not mask_path.exists():
+                print(f"Warning: Mask not found for {image_path}, skipping...")
+                continue
+            item = {"image_path": image_path, "mask_path": mask_path}
+            if self.use_indices:
+                indices_path = self.dirs["indices_dir"] / f"{fname}.pt"
+                if not indices_path.exists():
+                    print(f"Warning: Indices not found for {image_path}, skipping...")
+                    continue
+                item["indices_path"] = indices_path
+            if self.split == "train":
+                mask_path_a = self.dirs["mask_dir_a"] / fname
+                mask_path_b = self.dirs["mask_dir_b"] / fname
+                if not mask_path_a.exists() or not mask_path_b.exists():
+                    print(f"Warning: Additional masks not found for {image_path}, skipping...")
+                    continue
+                item["mask_path_a"] = mask_path_a
+                item["mask_path_b"] = mask_path_b
+                label = self._extract_label(fname)
+                if label is not None:
+                    item["class_label"] = label
+                else:
+                    continue  # Skip items with invalid labels
+            items.append(item)
+        return items
+
+    def __getitem__(self, index: int) -> Dict:
+        item = self.items[index]
+        try:
+            if self.use_indices:
+                indices = torch.load(item["indices_path"])  # [28, 28]
+                sample = {"indices": indices}
+            else:
+                image = Image.open(item["image_path"]).convert("RGB")
+                sample = {"image": image}
+            mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
+            sample["label"] = mask
+            if self.split == "train":
+                sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
+                sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
+                sample["class_label"] = item["class_label"]
+            elif self.split in ["val", "test"]:
+                sample["image_path"] = str(item["image_path"])
+        except Exception as e:
+            raise RuntimeError(f"Failed to load item {item}: {e}")
+
+        if self.transform:
+            sample = self.transform(sample)
+        return sample 
+
+
+
+def create_indice_dataloaders(
+    dataroot: str,
+    dataset: str,
+    batch_size: int,
+    num_workers: int = 4,
+    stage: str = "stage2",
+    use_indices: bool = False
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    if stage == "stage1":
+        train_dataset = Stage1TrainDataset(
+            data_path=os.path.join(dataroot, "train"),
+            dataset=dataset,
+            transform=get_transform("train")
+        )
+        val_dataset = Stage1InferenceDataset(
+            data_path=os.path.join(dataroot, "val"),
+            transform=get_transform("val")
+        )
+        test_dataset = Stage1InferenceDataset(
+            data_path=os.path.join(dataroot, "test"),
+            transform=get_transform("val")
+        )
+    else:  # stage2
+        train_dataset = Stage2IndiceDataset(
+            base_dir=dataroot,
+            split="train",
+            dataset=dataset,
+            transform=get_transform("train"),
+            use_indices=use_indices
+        )
+        val_dataset = Stage2IndiceDataset(
+            base_dir=dataroot,
+            split="val",
+            dataset=dataset,
+            transform=get_transform("val"),
+            use_indices=use_indices
+        )
+        test_dataset = Stage2IndiceDataset(
+            base_dir=dataroot,
+            split="test",
+            dataset=dataset,
+            transform=get_transform("val"),
+            use_indices=use_indices
+        )
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=1,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+
+    return train_loader, val_loader, test_loader 
