@@ -634,13 +634,13 @@ def create_indice_dataloaders(
         split="val",
         dataset=dataset,
     )
-    test_dataset = Stage2IndiceDataset(
-        indices_base=indice_root,
-        masks_base=mask_root,
-        split="test",
-        dataset=dataset,
-    )
-
+    # test_dataset = Stage2IndiceDataset(
+    #     indices_base=indice_root,
+    #     masks_base=mask_root,
+    #     split="test",
+    #     dataset=dataset,
+    # )
+    test_loader = None 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
