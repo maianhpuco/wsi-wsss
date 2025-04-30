@@ -351,19 +351,24 @@ def create_dataloaders(
 
     return train_loader, val_loader, test_loader
 
-#=============Indice Dataloaders================= 
+
+
+import re
+
+#=============Indice Dataloaders=================
 class Stage2IndiceDataset(Dataset):
     def __init__(self, indices_base: str, masks_base: str, split: str, dataset: str):
-            if split not in ["train", "val", "test"]:
-                raise ValueError(f"Invalid split: {split}")
-            if dataset not in ["luad", "bcss"]:
-                raise ValueError(f"Unsupported dataset: {dataset}")
-            self.split = split
-            self.dataset = dataset
-            self.dirs = self._set_directories(indices_base, masks_base, split)
-            self.items = self._load_items()
-            print(f"Number of items in {split}: {len(self.items)}") 
-        
+        if split not in ["train", "val", "test"]:
+            raise ValueError(f"Invalid split: {split}")
+        if dataset not in ["luad", "bcss"]:
+            raise ValueError(f"Unsupported dataset: {dataset}")
+        self.split = split
+        self.dataset = dataset
+        self.dirs = self._set_directories(indices_base, masks_base, split)
+        self.label_transform = get_label_transform(split)  # Transform for labels
+        self.items = self._load_items()
+        print(f"Number of items in {split}: {len(self.items)}")
+
     def _set_directories(self, indices_base: str, masks_base: str, split: str) -> Dict[str, Path]:
         indices_base = Path(indices_base)
         masks_base = Path(masks_base)
@@ -377,25 +382,29 @@ class Stage2IndiceDataset(Dataset):
             }
         elif split == "val":
             return {
-                "indices_dir": indices_base / "val" / "indices",
+                "indices_dir": indices_base / "val" / "img" / "indices",  # Updated to match precompute_indices.py
                 "mask_dir": masks_base / "val" / "mask",
             }
-        else:
+        else:  # test
             return {
-                "indices_dir": indices_base / "test" / "indices",
+                "indices_dir": indices_base / "test" / "img" / "indices",  # Updated to match precompute_indices.py
                 "mask_dir": masks_base / "test" / "mask",
-            } 
+            }
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
-        # Extract label from filename, e.g., "a_b_c_d.png"
-        parts = fname.split("_")
-        if len(parts) < 4:
-            return None
+        # Extract label from filename, e.g., "[0101].pt"
         try:
-            label = torch.tensor([int(parts[i]) for i in range(4)], dtype=torch.int64)
+            label_str = fname.split("]")[0].split("[")[-1]
+            if self.dataset == "luad":
+                label = torch.tensor([int(x) for x in label_str.split()])
+            elif self.dataset == "bcss":
+                label = torch.tensor([int(label_str[0]), int(label_str[1]), 
+                                    int(label_str[2]), int(label_str[3])])
             return label
-        except (ValueError, IndexError):
+        except (IndexError, ValueError):
+            print(f"Warning: Invalid label format in {fname}")
             return None
+
     def _load_items(self) -> List[Dict]:
         items = []
         for fname in sorted(os.listdir(self.dirs["indices_dir"])):
@@ -406,9 +415,8 @@ class Stage2IndiceDataset(Dataset):
             item = {"indices_path": indices_path}
 
             if self.split in ["val", "test"]:
-                # Remove any embedded label like [0101] if present
-                clean_name = re.sub(r"\[\d{4}\]", "", fname)
-                base_name = clean_name.replace(".pt", ".png")
+                # Simply remove .pt and add .png, no embedded label in these filenames
+                base_name = fname.replace(".pt", ".png")
                 mask_path = self.dirs["mask_dir"] / base_name
 
                 print(f"PT: {fname}")
@@ -435,10 +443,26 @@ class Stage2IndiceDataset(Dataset):
                     print(f"Warning: Invalid label format in {fname}, skipping...")
                     continue
 
+                # Masks for train split
+                base_name = fname.replace(".pt", ".png")
+                mask_path = self.dirs["mask_dir"] / base_name
+                mask_path_a = self.dirs["mask_dir_a"] / base_name
+                mask_path_b = self.dirs["mask_dir_b"] / base_name
+
+                if not mask_path.exists():
+                    print(f"Warning: Mask not found for {indices_path}, skipping...")
+                    continue
+                if not mask_path_a.exists() or not mask_path_b.exists():
+                    print(f"Warning: Additional masks not found for {indices_path}, skipping...")
+                    continue
+
+                item["mask_path"] = mask_path
+                item["mask_path_a"] = mask_path_a
+                item["mask_path_b"] = mask_path_b
+
             items.append(item)
 
-        return items  
- 
+        return items
 
     def __len__(self) -> int:
         return len(self.items)
@@ -456,6 +480,11 @@ class Stage2IndiceDataset(Dataset):
                 sample["class_label"] = item["class_label"]
             elif self.split in ["val", "test"]:
                 sample["image_path"] = str(item["indices_path"]).replace("indices", "img").replace(".pt", ".png")
+
+            # Apply label transform (convert masks to tensors)
+            if self.label_transform:
+                sample = self.label_transform(sample)
+
         except Exception as e:
             raise RuntimeError(f"Failed to load item {item}: {e}")
 
@@ -496,4 +525,4 @@ def create_indice_dataloaders(
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader, test_loader
-#=============End: Indice Dataloaders================= s
+#=============End: Indice Dataloaders=================
