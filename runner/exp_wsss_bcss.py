@@ -51,7 +51,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Process WSI patches")
     parser.add_argument("--config", type=str, default=f"configs/{default_experiment}.yaml", help="Path to YAML config file")
-    parser.add_argument("--data_config", type=str, default=f"configs/{default_dataset}.yaml", help="Path to data YAML config file")
+    parser.add_argument("--data_config", type=str, default=f"configs/{default_dataset}.py", help="Path to data YAML config file")
 
     parser.add_argument("--train_test_val", type=str, default="train", help="Specify train/test/val")
     
