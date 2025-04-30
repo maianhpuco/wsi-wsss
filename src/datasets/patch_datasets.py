@@ -153,6 +153,8 @@ class Stage1TrainDataset(BaseImageDataset):
         if self.transform:
             sample = self.transform(sample)
         return sample
+    
+
 class Stage2Dataset(BaseImageDataset):
     def __init__(self, base_dir: str, split: str, dataset: str, transform: Optional[Any] = None):
         if split not in ["train", "val", "test"]:
