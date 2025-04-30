@@ -351,7 +351,16 @@ def create_dataloaders(
 
     return train_loader, val_loader, test_loader
 
-
+def get_label_transform(split: str) -> transforms.Compose:
+    # Transform for labels only (used by Stage2IndiceDataset)
+    if split == "train":
+        return transforms.Compose([
+            CustomTransforms.ToTensor,  # Converts labels to tensors
+        ])
+    else:  # val or test
+        return transforms.Compose([
+            CustomTransforms.ToTensor,
+        ])
 
 import re
 
