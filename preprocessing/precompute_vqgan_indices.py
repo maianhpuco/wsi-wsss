@@ -40,9 +40,9 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
     if output_dir_root is None:
         output_dir_root = data_dir.replace("_organized", "_indice")
     
-    if os.path.exists(output_dir_root):
-        shutil.rmtree(output_dir_root)  # Remove existing directory and all contents
-    os.makedirs(output_dir_root)        # Create a fresh directory 
+    # if os.path.exists(output_dir_root):
+    #     shutil.rmtree(output_dir_root)  # Remove existing directory and all contents
+    # os.makedirs(output_dir_root)        # Create a fresh directory 
     
     # Load dataloaders for all splits
     train_loader, val_loader, test_loader = create_dataloaders(
