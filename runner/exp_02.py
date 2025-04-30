@@ -66,25 +66,25 @@ def main():
     #=================End: Load VQ-GAN model================= 
 
     #=================Start: Load Dataset=================
-    if args.use_indices:
-        indice_root = args.data_dir.replace("_organized", "_indice")  # e.g., BCSS-WSSS_indice
-        mask_root = args.data_dir  # e.g., BCSS-WSSS_organized
-        train_loader, val_loader, test_loader = create_indice_dataloaders(
-            indice_root=indice_root,
-            mask_root=mask_root,
-            dataset=args.dataset_name,
-            batch_size=args.batch_size,
-            num_workers=4,
-            stage="stage2"
-        )
-    else:
-        train_loader, val_loader, test_loader = create_dataloaders(
-            dataroot=args.data_dir,
-            dataset=args.dataset_name,
-            batch_size=args.batch_size,
-            num_workers=4,
-            stage="stage2"
-        )
+    # if args.use_indices:
+    indice_root = args.data_dir.replace("_organized", "_indice")  # e.g., BCSS-WSSS_indice
+    mask_root = args.data_dir  # e.g., BCSS-WSSS_organized
+    train_loader, val_loader, test_loader = create_indice_dataloaders(
+        indice_root=indice_root,
+        mask_root=mask_root,
+        dataset=args.dataset_name,
+        batch_size=args.batch_size,
+        num_workers=4,
+        stage="stage2"
+    )
+    # else:
+    #     train_loader, val_loader, test_loader = create_dataloaders(
+    #         dataroot=args.data_dir,
+    #         dataset=args.dataset_name,
+    #         batch_size=args.batch_size,
+    #         num_workers=4,
+    #         stage="stage2"
+    #     )
  
     print("Sanity check dataloaders...") 
     for batch in train_loader:
