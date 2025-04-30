@@ -454,45 +454,26 @@ def create_indice_dataloaders(
     dataset: str,
     batch_size: int,
     num_workers: int = 4,
-    stage: str = "stage2",
-    use_indices: bool = False
+    stage: str = "stage2"
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    if stage == "stage1":
-        train_dataset = Stage1TrainDataset(
-            data_path=os.path.join(dataroot, "train"),
-            dataset=dataset,
-            transform=get_transform("train")
-        )
-        val_dataset = Stage1InferenceDataset(
-            data_path=os.path.join(dataroot, "val"),
-            transform=get_transform("val")
-        )
-        test_dataset = Stage1InferenceDataset(
-            data_path=os.path.join(dataroot, "test"),
-            transform=get_transform("val")
-        )
-    else:  # stage2
-        train_dataset = Stage2IndiceDataset(
-            base_dir=dataroot,
-            split="train",
-            dataset=dataset,
-            transform=get_transform("train"),
-            use_indices=use_indices
-        )
-        val_dataset = Stage2IndiceDataset(
-            base_dir=dataroot,
-            split="val",
-            dataset=dataset,
-            transform=get_transform("val"),
-            use_indices=use_indices
-        )
-        test_dataset = Stage2IndiceDataset(
-            base_dir=dataroot,
-            split="test",
-            dataset=dataset,
-            transform=get_transform("val"),
-            use_indices=use_indices
-        )
+    if stage != "stage2":
+        raise ValueError("Stage2IndiceDataset is only for stage2")
+
+    train_dataset = Stage2IndiceDataset(
+        base_dir=dataroot,
+        split="train",
+        dataset=dataset,
+    )
+    val_dataset = Stage2IndiceDataset(
+        base_dir=dataroot,
+        split="val",
+        dataset=dataset,
+    )
+    test_dataset = Stage2IndiceDataset(
+        base_dir=dataroot,
+        split="test",
+        dataset=dataset,
+    )
 
     train_loader = DataLoader(
         train_dataset,
@@ -516,4 +497,4 @@ def create_indice_dataloaders(
         pin_memory=True
     )
 
-    return train_loader, val_loader, test_loader 
+    return train_loader, val_loader, test_loader

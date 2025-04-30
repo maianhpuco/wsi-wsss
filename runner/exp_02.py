@@ -12,7 +12,7 @@ sys.path.append(PROJECT_ROOT)
 sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "taming-transformers")) 
 
 from utils import load_config  # Placeholder for your VQ-GAN loading code
-from src.datasets import create_dataloaders
+from src.datasets import create_dataloaders, create_indice_dataloaders
 from src.models import VQGANViTClassifier
 from utils.train import train 
 
@@ -69,13 +69,25 @@ def main():
 
     #=================Start: Training=================
 
-    train_loader, val_loader, _ = create_dataloaders(
-        dataroot=args.data_dir,
-        dataset=args.dataset_name,
-        batch_size=args.batch_size,
-        num_workers=4,
-        stage="stage2"
-    )
+
+    # Load dataset
+    if args.use_indices:
+        train_loader, val_loader, _ = create_indice_dataloaders(
+            dataroot=args.data_dir,
+            dataset=args.dataset_name,
+            batch_size=args.batch_size,
+            num_workers=4,
+            stage="stage2"
+        )
+    else:
+        train_loader, val_loader, _ = create_dataloaders(
+            dataroot=args.data_dir,
+            dataset=args.dataset_name,
+            batch_size=args.batch_size,
+            num_workers=4,
+            stage="stage2"
+        )
+ 
     
     print("Sanity check dataloaders...") 
     for batch in train_loader:
