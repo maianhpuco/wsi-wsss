@@ -373,6 +373,8 @@ class Stage2IndiceDataset(Dataset):
             raise ValueError(f"Unsupported dataset: {dataset}")
         self.split = split
         self.dataset = dataset
+        self.indices_base = indices_base  # Store for image_path derivation
+        self.masks_base = masks_base      # Store for image_path derivation
         self.dirs = self._set_directories(indices_base, masks_base, split)
         self.label_transform = get_label_transform(split)  # Transform for labels
         self.items = self._load_items()
@@ -391,12 +393,12 @@ class Stage2IndiceDataset(Dataset):
             }
         elif split == "val":
             return {
-                "indices_dir": indices_base / "val" / "img" / "indices",  # Updated to match precompute_indices.py
+                "indices_dir": indices_base / "val" / "indices",
                 "mask_dir": masks_base / "val" / "mask",
             }
         else:  # test
             return {
-                "indices_dir": indices_base / "test" / "img" / "indices",  # Updated to match precompute_indices.py
+                "indices_dir": indices_base / "test" / "indices",
                 "mask_dir": masks_base / "test" / "mask",
             }
 
@@ -488,7 +490,12 @@ class Stage2IndiceDataset(Dataset):
                 sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
                 sample["class_label"] = item["class_label"]
             elif self.split in ["val", "test"]:
-                sample["image_path"] = str(item["indices_path"]).replace("indices", "img").replace(".pt", ".png")
+                # Derive image_path by mapping indices path to the corresponding image in masks_base
+                indices_path_str = str(item["indices_path"])
+                image_path = indices_path_str.replace(self.indices_base, self.masks_base)
+                image_path = image_path.replace(f"{self.split}/indices", f"{self.split}/img")
+                image_path = image_path.replace(".pt", ".png")
+                sample["image_path"] = image_path
 
             # Apply label transform (convert masks to tensors)
             if self.label_transform:
@@ -534,4 +541,4 @@ def create_indice_dataloaders(
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader, test_loader
-#=============End: Indice Dataloaders=================
+#=============End: Indice Dataloaders================= 
