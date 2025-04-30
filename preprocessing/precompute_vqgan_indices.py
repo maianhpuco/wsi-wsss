@@ -76,12 +76,12 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
             for i, idx in enumerate(indices):
                 try:
                     image_path = batch["image_path"][i]  # Should be string
-                    print(i, image_path) 
+                    # print(i, image_path) 
                     image_name = os.path.splitext(os.path.basename(image_path))[0]
-                    print(f"Image name: {image_name}")
+                    # print(f"Image name: {image_name}")
                     save_path = os.path.join(output_dir, f"{image_name}.pt")
                     torch.save(idx.cpu(), save_path)
-                    print(f"Saved index: {save_path}")
+                    # print(f"Saved index: {save_path}")
                 except Exception as e:
                     print(f"Failed to save index for item {i}: {e}")
 
