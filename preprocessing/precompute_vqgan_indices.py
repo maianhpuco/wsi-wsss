@@ -101,3 +101,5 @@ if __name__ == "__main__":
         vqgan_logs_dir="/project/hnguyen2/mvu9/folder_04_ma/wsi_efficient_seg/resources/vqgan/logs",
         is_gumbel=True
     )
+
+# TCGA-S3-AA15-DX1_xmin55486_ymin28926_MPP-0.2500+9.png
