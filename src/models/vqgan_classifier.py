@@ -20,9 +20,9 @@ class VQGANProcessor(nn.Module):
             _, _, [_, _, indices] = self.vqgan.encode(images)  # [batch_size, H', W'], H'=W'=28
         return indices  # [batch_size, 28, 28]
 
-class ViTClassifier(nn.Module):
+class VQGANViTClassifier(nn.Module):
     def __init__(self, codebook_weights, num_classes=4, vit_model_name="vit_base_patch16_224"):
-        super(ViTClassifier, self).__init__()
+        super(VQGANViTClassifier, self).__init__()
         self.codebook_weights = codebook_weights  # [n_embed, embed_dim]
         self.embed_dim = codebook_weights.shape[1]  # e.g., 256
 

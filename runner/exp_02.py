@@ -4,6 +4,8 @@ import torch
 from torch.utils.data import DataLoader
 import argparse
 
+
+
 # Assuming the VQ-GAN loading functions are available
 # Add project root to sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -15,7 +17,6 @@ from utils import load_config  # Placeholder for your VQ-GAN loading code
 from src.datasets import create_dataloaders, create_indice_dataloaders
 from src.models import VQGANViTClassifier
 from utils.train import train 
-
 from taming.models.vqgan import VQModel, GumbelVQ
 #sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "efficientvit")) 
 
@@ -67,9 +68,8 @@ def main():
     print("Codebook weights:", codebook_weights.shape)
     #=================End: Load VQ-GAN model================= 
 
+
     #=================Start: Training=================
-
-
     # Load dataset
     if args.use_indices:
         train_loader, val_loader, _ = create_indice_dataloaders(

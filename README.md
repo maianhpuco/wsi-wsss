@@ -4,7 +4,8 @@ install taming model
 python 3.10 
 conda env update --file src/includes/taming-transformers/environment.yaml  --name wsi-safe 
 pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
- 
+pip install --upgrade transformers 
+pip install timm  
 
 ### Patch-level dataset:
 Datasets will be unpacked here.
