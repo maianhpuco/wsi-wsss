@@ -49,7 +49,8 @@ def main():
     args.num_epochs = config_file.num_epochs 
     args.learning_rate = config_file.learning_rate 
     args.is_gumbel = config_file.is_gumbel 
-     
+    args.use_indices = True 
+    
      
     DEVICE = torch.device(args.device)
 
