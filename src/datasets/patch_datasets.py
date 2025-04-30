@@ -4,6 +4,7 @@ import os
 from typing import List, Tuple, Dict, Optional, Any
 from pathlib import Path
 import torch
+import re 
 import numpy as np
 from PIL import Image
 from torchvision import transforms
@@ -410,8 +411,12 @@ class Stage2IndiceDataset(Dataset):
             if self.split in ["val", "test"]:
                 # Strip "+xx.pt" from filename
                 base_name = fname.split("+")[0] + ".png"
-                mask_path = self.dirs["mask_dir"] / base_name
-
+                # mask_path = self.dirs["mask_dir"] / base_name
+                base_name = re.sub(r"\[\d{4}\]", "", fname).replace(".pt", ".png")
+                mask_path = self.dirs["mask_dir"] / base_name 
+                print(f"PT: {fname}")
+                print(f"Mask lookup: {mask_path}") 
+                
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
                     continue
