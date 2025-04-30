@@ -539,13 +539,11 @@ class Stage2IndiceDataset(Dataset):
                 # Simply remove .pt and add .png, no embedded label in these filenames
                 base_name = fname.replace(".pt", ".png")
                 mask_path = self.dirs["mask_dir"] / base_name
-
-                print(f"PT: {fname}")
-                print(f"Mask lookup: {mask_path}")
-
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
-                    continue
+                    print(f"Mask lookup: {indices_path}") 
+                    # continue
+                    return 
 
                 item["mask_path"] = mask_path
 
@@ -556,7 +554,7 @@ class Stage2IndiceDataset(Dataset):
                     print(f"Warning: Could not extract label from {fname}, skipping...")
                     print(f"Mask lookup: {indices_path}")
                     return 
-                    continue
+                    # continue
 
                 label_str = match.group(1)
                 try:
