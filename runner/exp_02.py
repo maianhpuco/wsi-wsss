@@ -4,8 +4,6 @@ import torch
 from torch.utils.data import DataLoader
 import argparse
 
-
-
 # Assuming the VQ-GAN loading functions are available
 # Add project root to sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -18,8 +16,6 @@ from src.datasets import create_dataloaders, create_indice_dataloaders
 from src.models import VQGANViTClassifier
 from utils.train import train 
 from taming.models.vqgan import VQModel, GumbelVQ
-#sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "efficientvit")) 
-
 
 def load_vqgan(config, ckpt_path=None, is_gumbel=False):
     if is_gumbel:
@@ -52,20 +48,9 @@ def main():
     
     args.use_indices = True 
             
-    if args.use_indices:
-        indice_root = args.data_dir.replace("_organized", "_indice")
-        mask_root = args.data_dir  # still from _organized
-        train_loader, val_loader, test_loader = create_indice_dataloaders(
-            indice_root, mask_root, dataset=args.dataset_name, batch_size=args.batch_size
-        )
-    else:
-        train_loader, val_loader, test_loader = create_dataloaders(
-            dataroot=args.data_dir, dataset=args.dataset_name, batch_size=args.batch_size
-        )
- 
+    #=================Start: Load VQ-GAN model=================
     DEVICE = torch.device(args.device)
 
-    #=================Start: Load VQ-GAN model=================
     config32x32 = load_config(
         f"{args.vqgan_logs_dir}/vqgan_gumbel_f8/configs/model.yaml", display=False)
     
@@ -80,19 +65,20 @@ def main():
     print("Codebook weights:", codebook_weights.shape)
     #=================End: Load VQ-GAN model================= 
 
-
-    #=================Start: Training=================
-    # Load dataset
+    #=================Start: Load Dataset=================
     if args.use_indices:
-        train_loader, val_loader, _ = create_indice_dataloaders(
-            dataroot=args.data_dir,
+        indice_root = args.data_dir.replace("_organized", "_indice")  # e.g., BCSS-WSSS_indice
+        mask_root = args.data_dir  # e.g., BCSS-WSSS_organized
+        train_loader, val_loader, test_loader = create_indice_dataloaders(
+            indice_root=indice_root,
+            mask_root=mask_root,
             dataset=args.dataset_name,
             batch_size=args.batch_size,
             num_workers=4,
             stage="stage2"
         )
     else:
-        train_loader, val_loader, _ = create_dataloaders(
+        train_loader, val_loader, test_loader = create_dataloaders(
             dataroot=args.data_dir,
             dataset=args.dataset_name,
             batch_size=args.batch_size,
@@ -100,15 +86,16 @@ def main():
             stage="stage2"
         )
  
-    
     print("Sanity check dataloaders...") 
     for batch in train_loader:
-        images = batch["image"]
+        if "image" in batch:
+            print(f"Stage 2 Train - Images shape: {batch['image'].shape}")
+        else:
+            print(f"Stage 2 Train - Indices shape: {batch['indices'].shape}")
         labels = batch["label"]
         labels_a = batch["label_a"]
         labels_b = batch["label_b"]
         class_labels = batch["class_label"]
-        print(f"Stage 2 Train - Images shape: {images.shape}")
         print(f"Stage 2 Train - Labels shape: {labels.shape}")
         print(f"Stage 2 Train - Labels_a shape: {labels_a.shape}")
         print(f"Stage 2 Train - Labels_b shape: {labels_b.shape}")
@@ -116,6 +103,7 @@ def main():
         print(f"Stage 2 Train - Classification labels: {class_labels}")
         break 
 
+    #=================Start: Training=================
     model = VQGANViTClassifier(
         vqgan_model=vqgan_model,
         codebook_weights=codebook_weights,
@@ -123,7 +111,6 @@ def main():
         patch_size=14  # 224/16 ≈ 14 patches per dimension for timm's ViT
     ).to(DEVICE)
     
-
     # Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
