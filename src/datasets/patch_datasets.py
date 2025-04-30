@@ -426,7 +426,7 @@ class Stage2IndiceDataset(Dataset):
 
             items.append(item)
 
-    return items
+        return items
  
 
     def __len__(self) -> int:
