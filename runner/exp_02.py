@@ -75,7 +75,8 @@ def main():
         dataset=args.dataset_name,
         batch_size=args.batch_size,
         num_workers=4,
-        stage="stage2"
+        stage="stage2", 
+        subset_ratio=0.1,  # Use a subset of the dataset for testing 
     )
 
  

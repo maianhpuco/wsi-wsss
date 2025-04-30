@@ -8,7 +8,7 @@ import re
 import numpy as np
 from PIL import Image
 from torchvision import transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 import random 
 
 #=================Start: Transforms=================
@@ -363,25 +363,6 @@ class Stage2Dataset(BaseImageDataset):
             sample = self.transform(sample)
         return sample 
     
-    # def __getitem__(self, index: int) -> Dict:
-    #     item = self.items[index]
-    #     try:
-    #         image = Image.open(item["image_path"]).convert("RGB")
-    #         mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
-    #         sample = {"image": image, "label": mask}
-    #         if self.split == "train":
-    #             sample["label_a"] = Image.open(item["mask_path_a"]) if item["mask_path_a"].exists() else None
-    #             sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
-    #             sample["class_label"] = item["class_label"]  # Add classification label
-    #         elif self.split in ["val", "test"]:
-    #             sample["image_path"] = str(item["image_path"])
-    #     except Exception as e:
-    #         raise RuntimeError(f"Failed to load item {item}: {e}")
-
-    #     if self.transform:
-    #         sample = self.transform(sample)
-    #     return sample 
-    
 def get_transform(split: str) -> transforms.Compose:
     if split == "train":
         return transforms.Compose([
@@ -436,6 +417,28 @@ def create_dataloaders(
             dataset=dataset,  # Pass dataset argument
             transform=get_transform("val")
         )
+    # Apply subset sampling if subset_ratio < 1.0
+    if subset_ratio < 1.0:
+        # Ensure subset_ratio is between 0 and 1
+        subset_ratio = max(0.0, min(1.0, subset_ratio))
+        
+        # Subset for train
+        train_size = int(len(train_dataset) * subset_ratio)
+        train_indices = random.sample(range(len(train_dataset)), train_size)
+        train_dataset = Subset(train_dataset, train_indices)
+        print(f"Using {train_size} images for training (subset ratio: {subset_ratio})")
+
+        # Subset for val
+        val_size = int(len(val_dataset) * subset_ratio)
+        val_indices = random.sample(range(len(val_dataset)), val_size)
+        val_dataset = Subset(val_dataset, val_indices)
+        print(f"Using {val_size} images for validation (subset ratio: {subset_ratio})")
+
+        # Subset for test (optional, but we'll apply it for consistency)
+        test_size = int(len(test_dataset) * subset_ratio)
+        test_indices = random.sample(range(len(test_dataset)), test_size)
+        test_dataset = Subset(test_dataset, test_indices)
+        print(f"Using {test_size} images for testing (subset ratio: {subset_ratio})")
 
     train_loader = DataLoader(
         train_dataset,
@@ -617,7 +620,8 @@ def create_indice_dataloaders(
     dataset: str,
     batch_size: int,
     num_workers: int = 4,
-    stage: str = "stage2"
+    stage: str = "stage2", 
+    subset_ratio: float = 1.0 
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     if stage != "stage2":
         raise ValueError("Stage2IndiceDataset is only for stage2")
@@ -634,17 +638,34 @@ def create_indice_dataloaders(
         split="val",
         dataset=dataset,
     )
-    # test_dataset = Stage2IndiceDataset(
-    #     indices_base=indice_root,
-    #     masks_base=mask_root,
-    #     split="test",
-    #     dataset=dataset,
-    # )
+    test_dataset = Stage2IndiceDataset(
+        indices_base=indice_root,
+        masks_base=mask_root,
+        split="test",
+        dataset=dataset,
+    )
+    # Apply subset sampling if subset_ratio < 1.0
+    if subset_ratio < 1.0:
+        subset_ratio = max(0.0, min(1.0, subset_ratio))
+        train_size = int(len(train_dataset) * subset_ratio)
+        train_indices = random.sample(range(len(train_dataset)), train_size)
+        train_dataset = Subset(train_dataset, train_indices)
+        print(f"Using {train_size} items for training (subset ratio: {subset_ratio})")
+
+        val_size = int(len(val_dataset) * subset_ratio)
+        val_indices = random.sample(range(len(val_dataset)), val_size)
+        val_dataset = Subset(val_dataset, val_indices)
+        print(f"Using {val_size} items for validation (subset ratio: {subset_ratio})")
+
+        test_size = int(len(test_dataset) * subset_ratio)
+        test_indices = random.sample(range(len(test_dataset)), test_size)
+        test_dataset = Subset(test_dataset, test_indices)
+        print(f"Using {test_size} items for testing (subset ratio: {subset_ratio})")
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
-    # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
-    test_loader = None 
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
+    # test_loader = None 
 
     return train_loader, val_loader, test_loader
 #=============End: Indice Dataloaders=================
