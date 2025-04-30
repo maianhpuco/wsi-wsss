@@ -398,35 +398,40 @@ class Stage2IndiceDataset(Dataset):
         
     def _load_items(self) -> List[Dict]:
         items = []
-        indices_extensions = (".pt",)
         for fname in sorted(os.listdir(self.dirs["indices_dir"])):
-            if fname.startswith(".") or not fname.lower().endswith(indices_extensions):
+            if not fname.endswith(".pt"):
                 continue
 
             indices_path = self.dirs["indices_dir"] / fname
-            base_name = fname.split("+")[0] + ".png"
 
+            # Default structure
             item = {"indices_path": indices_path}
 
             if self.split in ["val", "test"]:
+                # Strip "+xx.pt" from filename
+                base_name = fname.split("+")[0] + ".png"
                 mask_path = self.dirs["mask_dir"] / base_name
+
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
                     continue
+
                 item["mask_path"] = mask_path
 
-            if self.split == "train":
+            elif self.split == "train":
+                # Extract label from filename suffix [0101].pt
                 try:
                     label_str = fname.split("[")[-1].replace("].pt", "")
                     label = torch.tensor([int(c) for c in label_str], dtype=torch.long)
                     item["class_label"] = label
                 except Exception:
-                    print(f"Warning: Invalid label in {fname}, skipping...")
+                    print(f"Warning: Could not extract label from {fname}, skipping...")
                     continue
 
             items.append(item)
 
         return items
+ 
  
 
     def __len__(self) -> int:
