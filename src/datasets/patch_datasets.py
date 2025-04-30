@@ -541,7 +541,7 @@ class Stage2IndiceDataset(Dataset):
                 mask_path = self.dirs["mask_dir"] / base_name
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
-                    print(f"Mask lookup: {indices_path}") 
+                    print(f"Mask lookup: {mask_path}") 
                     # continue
                     return 
 
