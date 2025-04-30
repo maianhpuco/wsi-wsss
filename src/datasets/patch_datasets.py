@@ -487,28 +487,27 @@ class Stage2IndiceDataset(Dataset):
         self.items = self._load_items()
         print(f"Number of items in {split}: {len(self.items)}")
 
-    def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
-        base_dir = Path(base_dir)
-        # 👇 new line: ensure masks always come from the "_organized" version
-        organized_dir = Path(str(base_dir).replace("_indice", "_organized"))
+    def _set_directories(self, indices_base: str, masks_base: str, split: str) -> Dict[str, Path]:
+        indices_base = Path(indices_base)
+        masks_base = Path(masks_base)
 
         if split == "train":
             return {
-                "image_dir": base_dir / "train",
-                "mask_dir": organized_dir / "train_PM" / "PM_bn7",
-                "mask_dir_a": organized_dir / "train_PM" / "PM_b5_2",
-                "mask_dir_b": organized_dir / "train_PM" / "PM_b4_5",
+                "indices_dir": indices_base / "train" / "indices",
+                "mask_dir": masks_base / "train_PM" / "PM_bn7",
+                "mask_dir_a": masks_base / "train_PM" / "PM_b5_2",
+                "mask_dir_b": masks_base / "train_PM" / "PM_b4_5",
             }
         elif split == "val":
             return {
-                "image_dir": base_dir / "val" / "img",
-                "mask_dir": organized_dir / "val" / "mask",
+                "indices_dir": indices_base / "val" / "indices",
+                "mask_dir": masks_base / "val" / "mask",
             }
         else:  # test
             return {
-                "image_dir": base_dir / "test" / "img",
-                "mask_dir": organized_dir / "test" / "mask",
-            } 
+                "indices_dir": indices_base / "test" / "indices",
+                "mask_dir": masks_base / "test" / "masks",  # Updated to test/masks
+            }
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
         # Extract label from filename, e.g., "[0101].pt"
@@ -543,9 +542,6 @@ class Stage2IndiceDataset(Dataset):
 
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
-                    print(f"Mask lookup: {mask_path}")
-                    return 
-                    ############# Debugging #############  
                     continue
 
                 item["mask_path"] = mask_path
@@ -555,6 +551,8 @@ class Stage2IndiceDataset(Dataset):
                 match = re.search(r"\[(\d{4})\]", fname)
                 if not match:
                     print(f"Warning: Could not extract label from {fname}, skipping...")
+                    print(f"Mask lookup: {indices_path}")
+                    return 
                     continue
 
                 label_str = match.group(1)
