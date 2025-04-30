@@ -395,34 +395,39 @@ class Stage2IndiceDataset(Dataset):
             return label
         except (ValueError, IndexError):
             return None
-
+        
     def _load_items(self) -> List[Dict]:
         items = []
         indices_extensions = (".pt",)
-        for fname in os.listdir(self.dirs["indices_dir"]):
+        for fname in sorted(os.listdir(self.dirs["indices_dir"])):
             if fname.startswith(".") or not fname.lower().endswith(indices_extensions):
                 continue
+
             indices_path = self.dirs["indices_dir"] / fname
-            mask_path = self.dirs["mask_dir"] / fname.replace(".pt", ".png")
-            if not mask_path.exists():
-                print(f"Warning: Mask not found for {indices_path}, skipping...")
-                continue
-            item = {"indices_path": indices_path, "mask_path": mask_path}
-            if self.split == "train":
-                mask_path_a = self.dirs["mask_dir_a"] / fname.replace(".pt", ".png")
-                mask_path_b = self.dirs["mask_dir_b"] / fname.replace(".pt", ".png")
-                if not mask_path_a.exists() or not mask_path_b.exists():
-                    print(f"Warning: Additional masks not found for {indices_path}, skipping...")
+            base_name = fname.split("+")[0] + ".png"
+
+            item = {"indices_path": indices_path}
+
+            if self.split in ["val", "test"]:
+                mask_path = self.dirs["mask_dir"] / base_name
+                if not mask_path.exists():
+                    print(f"Warning: Mask not found for {indices_path}, skipping...")
                     continue
-                item["mask_path_a"] = mask_path_a
-                item["mask_path_b"] = mask_path_b
-                label = self._extract_label(fname.replace(".pt", ".png"))
-                if label is not None:
+                item["mask_path"] = mask_path
+
+            if self.split == "train":
+                try:
+                    label_str = fname.split("[")[-1].replace("].pt", "")
+                    label = torch.tensor([int(c) for c in label_str], dtype=torch.long)
                     item["class_label"] = label
-                else:
-                    continue  # Skip items with invalid labels
+                except Exception:
+                    print(f"Warning: Invalid label in {fname}, skipping...")
+                    continue
+
             items.append(item)
-        return items
+
+    return items
+ 
 
     def __len__(self) -> int:
         return len(self.items)
