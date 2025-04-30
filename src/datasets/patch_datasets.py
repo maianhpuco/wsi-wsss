@@ -396,7 +396,6 @@ class Stage2IndiceDataset(Dataset):
             return label
         except (ValueError, IndexError):
             return None
-        
     def _load_items(self) -> List[Dict]:
         items = []
         for fname in sorted(os.listdir(self.dirs["indices_dir"])):
@@ -404,19 +403,17 @@ class Stage2IndiceDataset(Dataset):
                 continue
 
             indices_path = self.dirs["indices_dir"] / fname
-
-            # Default structure
             item = {"indices_path": indices_path}
 
             if self.split in ["val", "test"]:
-                # Strip "+xx.pt" from filename
-                base_name = fname.split("+")[0] + ".png"
-                # mask_path = self.dirs["mask_dir"] / base_name
-                base_name = re.sub(r"\[\d{4}\]", "", fname).replace(".pt", ".png")
-                mask_path = self.dirs["mask_dir"] / base_name 
+                # Remove any embedded label like [0101] if present
+                clean_name = re.sub(r"\[\d{4}\]", "", fname)
+                base_name = clean_name.replace(".pt", ".png")
+                mask_path = self.dirs["mask_dir"] / base_name
+
                 print(f"PT: {fname}")
-                print(f"Mask lookup: {mask_path}") 
-                
+                print(f"Mask lookup: {mask_path}")
+
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
                     continue
@@ -424,19 +421,23 @@ class Stage2IndiceDataset(Dataset):
                 item["mask_path"] = mask_path
 
             elif self.split == "train":
-                # Extract label from filename suffix [0101].pt
+                # Expect format like ...[0101].pt → extract classification label
+                match = re.search(r"\[(\d{4})\]", fname)
+                if not match:
+                    print(f"Warning: Could not extract label from {fname}, skipping...")
+                    continue
+
+                label_str = match.group(1)
                 try:
-                    label_str = fname.split("[")[-1].replace("].pt", "")
                     label = torch.tensor([int(c) for c in label_str], dtype=torch.long)
                     item["class_label"] = label
                 except Exception:
-                    print(f"Warning: Could not extract label from {fname}, skipping...")
+                    print(f"Warning: Invalid label format in {fname}, skipping...")
                     continue
 
             items.append(item)
 
-        return items
- 
+        return items  
  
 
     def __len__(self) -> int:
