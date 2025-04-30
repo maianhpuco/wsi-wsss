@@ -4,8 +4,8 @@ import os
 import sys 
 import shutil 
 import torch
-
-
+from tqdm import tqdm
+ 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 print(f"Project root added to sys.path: {PROJECT_ROOT}")  
@@ -67,14 +67,13 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
             stage="stage2"
         )
         loader = train_loader if split == "train" else val_loader
-
-        for batch in loader:
+        
+        for batch in tqdm(loader, desc=f"Encoding {split}", leave=False):
+        # for batch in loader:
             images = batch["image"].to(DEVICE)
             indices = vqgan_processor(images)  # Shape: [B, H, W] or [B, T]
 
             for i, idx in enumerate(indices):
-                image_path = batch["image_path"][i]  # Should be string 
-                print(i, image_path)
                 try:
                     image_path = batch["image_path"][i]  # Should be string
                     print(i, image_path) 
