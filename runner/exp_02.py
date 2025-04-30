@@ -44,21 +44,35 @@ def main():
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device to train on")
     args = parser.parse_args()
 
+    from configs import exp_02 as config_file 
+       
+    args.vqgan_logs_dir = config_file.vqgan_logs_dir
+    args.dataset_name = config_file.dataset_name 
+    args.data_dir = config_file.data_dir 
+    args.batch_size = config_file.batch_size 
+    args.num_epochs = config_file.num_epochs 
+    args.learning_rate = config_file.learning_rate 
+    args.is_gumbel = config_file.is_gumbel 
+     
+     
     DEVICE = torch.device(args.device)
 
-    # Load VQ-GAN model
+    #=================Start: Load VQ-GAN model=================
     config32x32 = load_config(
         f"{args.vqgan_logs_dir}/vqgan_gumbel_f8/configs/model.yaml", display=False)
+    
     vqgan_model = load_vqgan(
         config32x32, 
         ckpt_path=f"{args.vqgan_logs_dir}/vqgan_gumbel_f8/checkpoints/last.ckpt", 
-        is_gumbel=args.is_gumbel).to(DEVICE)
-
+        is_gumbel=args.is_gumbel).to(DEVICE)    
     if args.is_gumbel:
         codebook_weights = vqgan_model.quantize.embed.weight  # [n_embed, embed_dim]
     else:
         raise NotImplementedError("Only Gumbel VQ-GAN is supported in this example")
     print("Codebook weights:", codebook_weights.shape)
+    #=================End: Load VQ-GAN model================= 
+
+    #=================Start: Training=================
 
     train_loader, val_loader, _ = create_dataloaders(
         dataroot=args.data_dir,

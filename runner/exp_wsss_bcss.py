@@ -45,10 +45,10 @@ def main(dataroot, dataset_name):
     
 
 if __name__ == "__main__":
-        # Argument parser
-    default_dataset = 'bcss'
-    default_experiment = os.path.basename(__file__)
+    from configs import exp_02 as config_file
     
+    default_dataset = 'bcss'
+    default_experiment = os.path.basename(__file__) 
     parser = argparse.ArgumentParser(description="Process WSI patches")
     parser.add_argument("--config", type=str, default=f"configs/{default_experiment}.yaml", help="Path to YAML config file")
     parser.add_argument("--data_config", type=str, default=f"configs/{default_dataset}.py", help="Path to data YAML config file")
@@ -63,14 +63,22 @@ if __name__ == "__main__":
     with open(args.data_config, 'r') as f:
         config.update(yaml.safe_load(f))
     
-    # Validate config keys
-    required_keys = ["data_dir", f"{args.train_test_val}_wsi_processed_patch_save_dir"]
-    missing_keys = [key for key in required_keys if key not in config]
-    if missing_keys:
-        raise KeyError(f"Missing required config keys: {missing_keys}")
+    args.vqgan_logs_dir = config_file.vqgan_logs_dir
+    args.dataset_name = config_file.dataset_name 
+    args.data_dir = config_file.data_dir 
+    args.batch_size = config_file.batch_size 
+    args.num_epochs = config_file.num_epochs 
+    args.learning_rate = config_file.learning_rate 
+    args.is_gumbel = config_file.is_gumbel 
+     
+    
+    # # Validate config keys
+    # required_keys = ["data_dir", f"{args.train_test_val}_wsi_processed_patch_save_dir"]
+    # missing_keys = [key for key in required_keys if key not in config]
+    
+    # if missing_keys:
+    #     raise KeyError(f"Missing required config keys: {missing_keys}")
  
-    args.vqgan_logs_dir = config.get('vqgan_logs_dir') 
-    args.is_gumbel = True  
     
     main(args)
     
