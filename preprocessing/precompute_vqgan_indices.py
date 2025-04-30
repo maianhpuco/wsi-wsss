@@ -53,8 +53,8 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
         stage="stage2"
     )
 
-    # for split, loader in [("train", train_loader), ("val", val_loader), ("test", test_loader)]:
-    for split, loader in [("train", train_loader), ("val", val_loader)]:
+    for split, loader in [("train", train_loader), ("val", val_loader), ("test", test_loader)]:
+    # for split, loader in [("train", train_loader), ("val", val_loader)]:
         print(f"\nProcessing split: {split}")
         
         # Create output directory
