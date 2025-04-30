@@ -48,7 +48,15 @@ def train(model, train_loader, val_loader, optimizer, num_epochs, device):
         with torch.no_grad():
             for batch in tqdm(val_loader, desc="Validation"):
                 images = batch["image"].to(device)
-                labels = batch["class_label"].to(device).float()
+                # Derive class_label from label if not provided
+                if "class_label" in batch:
+                    labels = batch["class_label"].to(device).float()
+                else:
+                    labels_mask = batch["label"].to(device)  # [batch_size, 224, 224]
+                    # Create multi-label classification labels
+                    labels = torch.zeros(labels_mask.size(0), 4, device=device)
+                    for cls in range(1, 5):  # Classes 1-4 (TUM, STR, LYM, NEC)
+                        labels[:, cls-1] = (labels_mask == cls).any(dim=(1, 2)).float()
 
                 logits = model(images)
                 loss = criterion(logits, labels)
