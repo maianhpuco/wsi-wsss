@@ -109,7 +109,6 @@ def main():
         # vqgan_model=vqgan_model,
         codebook_weights=codebook_weights,
         num_classes=4,  # Multi-label classification for classes 1-4 (TUM, STR, LYM, NEC)
-        patch_size=14  # 224/16 ≈ 14 patches per dimension for timm's ViT
     ).to(DEVICE)
     
     # Optimizer
