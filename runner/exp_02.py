@@ -14,7 +14,7 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "taming-transforme
 from utils import load_config  # Placeholder for your VQ-GAN loading code
 from src.datasets import create_dataloaders, create_indice_dataloaders
 from src.models import VQGANViTClassifier
-from utils.train import train 
+from utils.train import train, train_indice
 from taming.models.vqgan import VQModel, GumbelVQ
 
 def load_vqgan(config, ckpt_path=None, is_gumbel=False):
@@ -67,7 +67,6 @@ def main():
     #=================End: Load VQ-GAN model================= 
 
     #=================Start: Load Dataset=================
-    # if args.use_indices:
     indice_root = args.data_dir.replace("_organized", "_indice")  # e.g., BCSS-WSSS_indice
     mask_root = args.data_dir  # e.g., BCSS-WSSS_organized
     train_loader, val_loader, test_loader = create_indice_dataloaders(
@@ -78,14 +77,7 @@ def main():
         num_workers=4,
         stage="stage2"
     )
-    # else:
-    #     train_loader, val_loader, test_loader = create_dataloaders(
-    #         dataroot=args.data_dir,
-    #         dataset=args.dataset_name,
-    #         batch_size=args.batch_size,
-    #         num_workers=4,
-    #         stage="stage2"
-    #     )
+
  
     print("Sanity check dataloaders...") 
     for batch in train_loader:
@@ -106,7 +98,6 @@ def main():
 
     #=================Start: Training=================
     model = VQGANViTClassifier(
-        # vqgan_model=vqgan_model,
         codebook_weights=codebook_weights,
         num_classes=4,  # Multi-label classification for classes 1-4 (TUM, STR, LYM, NEC)
     ).to(DEVICE)
@@ -115,7 +106,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # Train the model
-    train(
+    train_indice(
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
