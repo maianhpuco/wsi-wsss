@@ -277,24 +277,27 @@ class Stage2Dataset(BaseImageDataset):
 
     def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
         base_dir = Path(base_dir)
+        # 👇 new line: ensure masks always come from the "_organized" version
+        organized_dir = Path(str(base_dir).replace("_indice", "_organized"))
+
         if split == "train":
             return {
                 "image_dir": base_dir / "train",
-                "mask_dir": base_dir / "train_PM" / "PM_bn7",
-                "mask_dir_a": base_dir / "train_PM" / "PM_b5_2",
-                "mask_dir_b": base_dir / "train_PM" / "PM_b4_5",
+                "mask_dir": organized_dir / "train_PM" / "PM_bn7",
+                "mask_dir_a": organized_dir / "train_PM" / "PM_b5_2",
+                "mask_dir_b": organized_dir / "train_PM" / "PM_b4_5",
             }
         elif split == "val":
             return {
                 "image_dir": base_dir / "val" / "img",
-                "mask_dir": base_dir / "val" / "mask",
+                "mask_dir": organized_dir / "val" / "mask",
             }
         else:  # test
             return {
                 "image_dir": base_dir / "test" / "img",
-                "mask_dir": base_dir / "test" / "mask",
-            }
-
+                "mask_dir": organized_dir / "test" / "mask",
+            } 
+            
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
         """Extract image-level label from filename for BCSS or LUAD dataset."""
         try:
