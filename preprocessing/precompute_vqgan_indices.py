@@ -88,6 +88,7 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
 if __name__ == "__main__":
     # dataset_name = 'bcss'
     dataset_name = 'luad'  
+    
     if dataset_name == 'luad': 
         dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/LUAD-HistoSeg_organized"   
     
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         dataroot = "/project/hnguyen2/mvu9/datasets/processing_datasets/BCSS-WSSS_organized"     
     
     precompute_indices(
-        data_dir=dataroot
+        data_dir=dataroot,
         dataset_name=dataset_name,
         vqgan_logs_dir="/project/hnguyen2/mvu9/folder_04_ma/wsi_efficient_seg/resources/vqgan/logs",
         is_gumbel=True
