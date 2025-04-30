@@ -34,14 +34,9 @@ def load_vqgan(config, ckpt_path=None, is_gumbel=False):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--vqgan_logs_dir", type=str, required=False, help="Directory containing VQ-GAN model configs and checkpoints")
-    parser.add_argument("--is_gumbel", action="store_true", help="Whether to use Gumbel VQ-GAN")
-    parser.add_argument("--data_dir", type=str, required=False, help="Directory containing the dataset")
-    parser.add_argument("--dataset_name", type=str, required=True, choices=["bcss", "luad"], help="Dataset name (bcss or luad)")
-    parser.add_argument("--batch_size", type=int, default=16, help="Batch size for training")
-    parser.add_argument("--num_epochs", type=int, default=10, help="Number of training epochs")
-    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for optimizer")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device to train on")
+    parser.add_argument("--dataset_name", default='bcss', type=str)
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+
     args = parser.parse_args()
 
     from configs import exp_02 as config_file 

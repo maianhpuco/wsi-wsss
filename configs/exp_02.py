@@ -1,6 +1,5 @@
 vqgan_logs_dir = '/project/hnguyen2/mvu9/folder_04_ma/wsi_efficient_seg/resources/vqgan/logs'
 is_gumbel = True 
-dataset_name = 'bcss'
 
 batch_size = 16
 num_epochs = 50
