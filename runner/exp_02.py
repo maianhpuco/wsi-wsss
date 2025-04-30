@@ -5,8 +5,6 @@ from torch.utils.data import DataLoader
 import argparse
 
 # Assuming the VQ-GAN loading functions are available
-
-
 # Add project root to sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 print(f"Project root added to sys.path: {PROJECT_ROOT}")  
@@ -15,7 +13,7 @@ sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "taming-transforme
 
 from utils import load_config  # Placeholder for your VQ-GAN loading code
 from src.datasets import create_dataloaders
-from model import VQGANViTClassifier
+from src.models import VQGANViTClassifier
 from utils.train import train 
 
 from taming.models.vqgan import VQModel, GumbelVQ
