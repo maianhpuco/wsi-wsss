@@ -4,14 +4,14 @@ import os
 import sys 
 import shutil 
 import torch
-from src.datasets import create_dataloaders
-from src.models import VQGANProcessor
+
 from utils import load_config
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 print(f"Project root added to sys.path: {PROJECT_ROOT}")  
 sys.path.append(PROJECT_ROOT) 
-
+from src.datasets import create_dataloaders
+from src.models import VQGANProcessor 
 
 def load_vqgan(config, ckpt_path=None, is_gumbel=False):
     from taming.models.vqgan import VQModel, GumbelVQ 
