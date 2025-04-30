@@ -324,6 +324,7 @@ class Stage2Dataset(BaseImageDataset):
             mask_path = self.dirs["mask_dir"] / fname
             if not mask_path.exists():
                 print(f"Warning: Mask not found for {image_path}, skipping...")
+                print(f"Mask lookup: {mask_path}") 
                 continue
             item = {"image_path": image_path, "mask_path": mask_path}
             if self.split == "train":
