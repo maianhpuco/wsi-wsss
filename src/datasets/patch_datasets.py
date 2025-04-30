@@ -277,27 +277,24 @@ class Stage2Dataset(BaseImageDataset):
 
     def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
         base_dir = Path(base_dir)
-        # 👇 new line: ensure masks always come from the "_organized" version
-        organized_dir = Path(str(base_dir).replace("_indice", "_organized"))
-
         if split == "train":
             return {
                 "image_dir": base_dir / "train",
-                "mask_dir": organized_dir / "train_PM" / "PM_bn7",
-                "mask_dir_a": organized_dir / "train_PM" / "PM_b5_2",
-                "mask_dir_b": organized_dir / "train_PM" / "PM_b4_5",
+                "mask_dir": base_dir / "train_PM" / "PM_bn7",
+                "mask_dir_a": base_dir / "train_PM" / "PM_b5_2",
+                "mask_dir_b": base_dir / "train_PM" / "PM_b4_5",
             }
         elif split == "val":
             return {
                 "image_dir": base_dir / "val" / "img",
-                "mask_dir": organized_dir / "val" / "mask",
+                "mask_dir": base_dir / "val" / "mask",
             }
         else:  # test
             return {
                 "image_dir": base_dir / "test" / "img",
-                "mask_dir": organized_dir / "test" / "mask",
-            } 
-            
+                "mask_dir": base_dir / "test" / "mask",
+            }
+
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
         """Extract image-level label from filename for BCSS or LUAD dataset."""
         try:
@@ -324,7 +321,6 @@ class Stage2Dataset(BaseImageDataset):
             mask_path = self.dirs["mask_dir"] / fname
             if not mask_path.exists():
                 print(f"Warning: Mask not found for {image_path}, skipping...")
-                print(f"Mask lookup: {mask_path}") 
                 continue
             item = {"image_path": image_path, "mask_path": mask_path}
             if self.split == "train":
@@ -491,27 +487,28 @@ class Stage2IndiceDataset(Dataset):
         self.items = self._load_items()
         print(f"Number of items in {split}: {len(self.items)}")
 
-    def _set_directories(self, indices_base: str, masks_base: str, split: str) -> Dict[str, Path]:
-        indices_base = Path(indices_base)
-        masks_base = Path(masks_base)
+    def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
+        base_dir = Path(base_dir)
+        # 👇 new line: ensure masks always come from the "_organized" version
+        organized_dir = Path(str(base_dir).replace("_indice", "_organized"))
 
         if split == "train":
             return {
-                "indices_dir": indices_base / "train" / "indices",
-                "mask_dir": masks_base / "train_PM" / "PM_bn7",
-                "mask_dir_a": masks_base / "train_PM" / "PM_b5_2",
-                "mask_dir_b": masks_base / "train_PM" / "PM_b4_5",
+                "image_dir": base_dir / "train",
+                "mask_dir": organized_dir / "train_PM" / "PM_bn7",
+                "mask_dir_a": organized_dir / "train_PM" / "PM_b5_2",
+                "mask_dir_b": organized_dir / "train_PM" / "PM_b4_5",
             }
         elif split == "val":
             return {
-                "indices_dir": indices_base / "val" / "indices",
-                "mask_dir": masks_base / "val" / "mask",
+                "image_dir": base_dir / "val" / "img",
+                "mask_dir": organized_dir / "val" / "mask",
             }
         else:  # test
             return {
-                "indices_dir": indices_base / "test" / "indices",
-                "mask_dir": masks_base / "test" / "masks",  # Updated to test/masks
-            }
+                "image_dir": base_dir / "test" / "img",
+                "mask_dir": organized_dir / "test" / "mask",
+            } 
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
         # Extract label from filename, e.g., "[0101].pt"
@@ -546,6 +543,9 @@ class Stage2IndiceDataset(Dataset):
 
                 if not mask_path.exists():
                     print(f"Warning: Mask not found for {indices_path}, skipping...")
+                    print(f"Mask lookup: {mask_path}")
+                    return 
+                    ############# Debugging #############  
                     continue
 
                 item["mask_path"] = mask_path
