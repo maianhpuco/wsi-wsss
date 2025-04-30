@@ -9,72 +9,179 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
+import random 
 
+#=================Start: Transforms=================
 class CustomTransforms:
+    class RGBToClassIndex:
+        """Convert an RGB mask to a class index tensor for BCSS dataset."""
+        def __init__(self):
+            # Define RGB to class index mapping for BCSS dataset
+            self.rgb_to_class = {
+                (0, 0, 0): 0,      # Background
+                (255, 0, 0): 1,    # Tumor (TUM)
+                (0, 255, 0): 2,    # Stroma (STR)
+                (0, 0, 255): 3,    # Lymphocytes (LYM)
+                (255, 255, 0): 4,  # Necrosis (NEC)
+            }
+            # Default class for unmapped colors (e.g., "Others")
+            self.default_class = 0
+
+        def __call__(self, mask: Image.Image) -> torch.Tensor:
+            # Convert PIL Image to NumPy array
+            mask_np = np.array(mask, dtype=np.uint8)  # Shape: [H, W, 3]
+            
+            # Initialize class index array
+            class_indices = np.full(mask_np.shape[:2], self.default_class, dtype=np.int64)  # Shape: [H, W]
+            
+            # Map RGB values to class indices
+            for rgb, class_idx in self.rgb_to_class.items():
+                # Create a mask where the RGB values match
+                rgb_match = np.all(mask_np == rgb, axis=-1)
+                class_indices[rgb_match] = class_idx
+            
+            # Convert to PyTorch tensor
+            class_tensor = torch.from_numpy(class_indices).long()  # Shape: [H, W], dtype=torch.long
+            return class_tensor
+
     @staticmethod
-    def RandomHorizontalFlip(sample: Dict) -> Dict:
-        if torch.rand(1) > 0.5:
-            sample["image"] = sample["image"].transpose(Image.FLIP_LEFT_RIGHT)
-            for key in ["label", "label_a", "label_b"]:
-                if key in sample and sample[key] is not None:
-                    sample[key] = sample[key].transpose(Image.FLIP_LEFT_RIGHT)
+    def ToTensor(sample):
+        """Convert masks to class index tensors and optionally handle images."""
+        if "image" in sample and sample["image"] is not None:
+            sample["image"] = transforms.ToTensor()(sample["image"])
+        
+        # Convert masks to class index tensors using RGBToClassIndex
+        rgb_to_class = CustomTransforms.RGBToClassIndex()
+        if "label" in sample and sample["label"] is not None:
+            sample["label"] = rgb_to_class(sample["label"])  # Convert RGB mask to class indices
+        if "label_a" in sample and sample["label_a"] is not None:
+            sample["label_a"] = rgb_to_class(sample["label_a"])
+        if "label_b" in sample and sample["label_b"] is not None:
+            sample["label_b"] = rgb_to_class(sample["label_b"])
+        
         return sample
 
     @staticmethod
-    def RandomGaussianBlur(sample: Dict) -> Dict:
-        if torch.rand(1) > 0.5:
-            blur = transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 2.0))
-            sample["image"] = blur(sample["image"])
+    def Normalize(sample):
+        if "image" in sample and sample["image"] is not None:
+            sample["image"] = transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            )(sample["image"])
         return sample
 
     @staticmethod
-    def RGBToClassIndex(mask: Image.Image) -> np.ndarray:
-        """Convert mask to class index map (handles both RGB and indexed masks)."""
-        mask_np = np.array(mask)
-
-        # Check if mask is single-channel (indexed)
-        if mask_np.ndim == 2:
-            # Assume values are already class indices (0 to 4)
-            class_mask = mask_np.astype(np.int64)
-            # Validate class indices
-            valid_classes = set(range(5))  # Classes 0 to 4
-            unique_classes = set(np.unique(class_mask))
-            if not unique_classes.issubset(valid_classes):
-                raise ValueError(f"Invalid class indices in mask: {unique_classes}")
-            return class_mask
-
-        # Otherwise, assume RGB mask
-        palette = {
-            (255, 255, 255): 0,  # Background
-            (255, 0, 0): 1,      # TUM
-            (0, 255, 0): 2,      # STR
-            (0, 0, 255): 3,      # LYM
-            (255, 0, 255): 4     # NEC
-        }
-        if mask_np.shape[-1] != 3:
-            raise ValueError(f"Expected RGB mask with shape (H, W, 3), got shape {mask_np.shape}")
-        class_mask = np.zeros((mask_np.shape[0], mask_np.shape[1]), dtype=np.int64)
-        for rgb, class_idx in palette.items():
-            class_mask[np.all(mask_np == rgb, axis=-1)] = class_idx
-        return class_mask
-
-    @staticmethod
-    def ToTensor(sample: Dict) -> Dict:
-        """Convert image and labels to tensors."""
-        sample["image"] = transforms.ToTensor()(sample["image"])
-        for key in ["label", "label_a", "label_b"]:
-            if key in sample and sample[key] is not None:
-                class_mask = CustomTransforms.RGBToClassIndex(sample[key])
-                sample[key] = torch.tensor(class_mask, dtype=torch.long)
+    def RandomHorizontalFlip(sample):
+        if random.random() > 0.5:
+            if "image" in sample and sample["image"] is not None:
+                sample["image"] = transforms.RandomHorizontalFlip(p=1.0)(sample["image"])
+            if "label" in sample and sample["label"] is not None:
+                sample["label"] = transforms.RandomHorizontalFlip(p=1.0)(sample["label"])
+            if "label_a" in sample and sample["label_a"] is not None:
+                sample["label_a"] = transforms.RandomHorizontalFlip(p=1.0)(sample["label_a"])
+            if "label_b" in sample and sample["label_b"] is not None:
+                sample["label_b"] = transforms.RandomHorizontalFlip(p=1.0)(sample["label_b"])
         return sample
 
     @staticmethod
-    def Normalize(sample: Dict) -> Dict:
-        """Apply normalization to the image tensor."""
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                       std=[0.229, 0.224, 0.225])
-        sample["image"] = normalize(sample["image"])
+    def RandomGaussianBlur(sample):
+        if random.random() > 0.5:
+            if "image" in sample and sample["image"] is not None:
+                sample["image"] = transforms.GaussianBlur(kernel_size=3)(sample["image"])
         return sample
+
+def get_transform(split: str) -> transforms.Compose:
+    if split == "train":
+        return transforms.Compose([
+            CustomTransforms.RandomHorizontalFlip,
+            CustomTransforms.RandomGaussianBlur,
+            CustomTransforms.ToTensor,
+            CustomTransforms.Normalize,
+        ])
+    else:  # val or test
+        return transforms.Compose([
+            CustomTransforms.ToTensor,
+            CustomTransforms.Normalize,
+        ])
+
+def get_label_transform(split: str) -> transforms.Compose:
+    if split == "train":
+        return transforms.Compose([
+            CustomTransforms.RandomHorizontalFlip,
+            CustomTransforms.ToTensor,  # Only transforms masks
+        ])
+    else:  # val or test
+        return transforms.Compose([
+            CustomTransforms.ToTensor,  # Only transforms masks
+        ])
+#=================End: Transforms=================
+
+# ... (rest of the code unchanged, including Stage2IndiceDataset) 
+
+# class CustomTransforms:
+#     @staticmethod
+#     def RandomHorizontalFlip(sample: Dict) -> Dict:
+#         if torch.rand(1) > 0.5:
+#             sample["image"] = sample["image"].transpose(Image.FLIP_LEFT_RIGHT)
+#             for key in ["label", "label_a", "label_b"]:
+#                 if key in sample and sample[key] is not None:
+#                     sample[key] = sample[key].transpose(Image.FLIP_LEFT_RIGHT)
+#         return sample
+
+#     @staticmethod
+#     def RandomGaussianBlur(sample: Dict) -> Dict:
+#         if torch.rand(1) > 0.5:
+#             blur = transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 2.0))
+#             sample["image"] = blur(sample["image"])
+#         return sample
+
+#     @staticmethod
+#     def RGBToClassIndex(mask: Image.Image) -> np.ndarray:
+#         """Convert mask to class index map (handles both RGB and indexed masks)."""
+#         mask_np = np.array(mask)
+
+#         # Check if mask is single-channel (indexed)
+#         if mask_np.ndim == 2:
+#             # Assume values are already class indices (0 to 4)
+#             class_mask = mask_np.astype(np.int64)
+#             # Validate class indices
+#             valid_classes = set(range(5))  # Classes 0 to 4
+#             unique_classes = set(np.unique(class_mask))
+#             if not unique_classes.issubset(valid_classes):
+#                 raise ValueError(f"Invalid class indices in mask: {unique_classes}")
+#             return class_mask
+
+#         # Otherwise, assume RGB mask
+#         palette = {
+#             (255, 255, 255): 0,  # Background
+#             (255, 0, 0): 1,      # TUM
+#             (0, 255, 0): 2,      # STR
+#             (0, 0, 255): 3,      # LYM
+#             (255, 0, 255): 4     # NEC
+#         }
+#         if mask_np.shape[-1] != 3:
+#             raise ValueError(f"Expected RGB mask with shape (H, W, 3), got shape {mask_np.shape}")
+#         class_mask = np.zeros((mask_np.shape[0], mask_np.shape[1]), dtype=np.int64)
+#         for rgb, class_idx in palette.items():
+#             class_mask[np.all(mask_np == rgb, axis=-1)] = class_idx
+#         return class_mask
+
+#     @staticmethod
+#     def ToTensor(sample: Dict) -> Dict:
+#         """Convert image and labels to tensors."""
+#         sample["image"] = transforms.ToTensor()(sample["image"])
+#         for key in ["label", "label_a", "label_b"]:
+#             if key in sample and sample[key] is not None:
+#                 class_mask = CustomTransforms.RGBToClassIndex(sample[key])
+#                 sample[key] = torch.tensor(class_mask, dtype=torch.long)
+#         return sample
+
+#     @staticmethod
+#     def Normalize(sample: Dict) -> Dict:
+#         """Apply normalization to the image tensor."""
+#         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+#                                        std=[0.229, 0.224, 0.225])
+#         sample["image"] = normalize(sample["image"])
+#         return sample
 
 class BaseImageDataset(Dataset):
     def __init__(self, data_path: str, transform: Optional[Any] = None):
@@ -399,7 +506,7 @@ class Stage2IndiceDataset(Dataset):
         else:  # test
             return {
                 "indices_dir": indices_base / "test" / "indices",
-                "mask_dir": masks_base / "test" / "mask",
+                "mask_dir": masks_base / "test" / "masks",  # Updated to test/masks
             }
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
@@ -541,4 +648,4 @@ def create_indice_dataloaders(
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader, test_loader
-#=============End: Indice Dataloaders================= 
+#=============End: Indice Dataloaders=================
