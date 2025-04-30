@@ -64,7 +64,7 @@ def precompute_indices(data_dir, dataset_name, vqgan_logs_dir, output_dir_root=N
             print(f"Output directory: {output_dir}") 
         # if os.path.exists(output_dir):
         #     shutil.rmtree(output_dir)  # Remove existing directory and all contents
-        # os.makedirs(output_dir)        # Create a fresh directory 
+        os.makedirs(output_dir)        # Create a fresh directory 
         
         for batch in tqdm(loader, desc=f"Encoding {split}", leave=False):
             images = batch["image"].to(DEVICE)
