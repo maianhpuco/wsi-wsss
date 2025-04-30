@@ -1,5 +1,9 @@
 # wsi-wsss
 
+install taming model 
+
+
+
 ### Patch-level dataset:
 Datasets will be unpacked here.
 
