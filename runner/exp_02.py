@@ -57,7 +57,8 @@ def main():
     vqgan_model = load_vqgan(
         config32x32, 
         ckpt_path=f"{args.vqgan_logs_dir}/vqgan_gumbel_f8/checkpoints/last.ckpt", 
-        is_gumbel=args.is_gumbel).to(DEVICE)    
+        is_gumbel=args.is_gumbel).to(DEVICE)   
+     
     if args.is_gumbel:
         codebook_weights = vqgan_model.quantize.embed.weight  # [n_embed, embed_dim]
     else:
@@ -105,7 +106,7 @@ def main():
 
     #=================Start: Training=================
     model = VQGANViTClassifier(
-        vqgan_model=vqgan_model,
+        # vqgan_model=vqgan_model,
         codebook_weights=codebook_weights,
         num_classes=4,  # Multi-label classification for classes 1-4 (TUM, STR, LYM, NEC)
         patch_size=14  # 224/16 ≈ 14 patches per dimension for timm's ViT
