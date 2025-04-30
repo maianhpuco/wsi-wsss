@@ -351,71 +351,70 @@ def create_dataloaders(
     return train_loader, val_loader, test_loader
 
 #=============Indice Dataloaders================= 
-
-# In src/datasets.py, update Stage2Dataset
-class Stage2IndiceDataset(BaseImageDataset):
-    def __init__(self, base_dir: str, split: str, dataset: str, transform: Optional[Any] = None, use_indices=False):
+class Stage2IndiceDataset(Dataset):
+    def __init__(self, base_dir: str, split: str, dataset: str):
         if split not in ["train", "val", "test"]:
             raise ValueError(f"Invalid split: {split}")
         if dataset not in ["luad", "bcss"]:
             raise ValueError(f"Unsupported dataset: {dataset}")
         self.split = split
         self.dataset = dataset
-        self.use_indices = use_indices
         self.dirs = self._set_directories(base_dir, split)
-        super().__init__(self.dirs["image_dir"], transform)
-        print(f"Number of images in {split}: {len(self.items)}")
+        self.items = self._load_items()
+        print(f"Number of items in {split}: {len(self.items)}")
 
     def _set_directories(self, base_dir: str, split: str) -> Dict[str, Path]:
         base_dir = Path(base_dir)
         if split == "train":
             return {
-                "image_dir": base_dir / "train",
+                "indices_dir": base_dir / "train" / "indices",
                 "mask_dir": base_dir / "train_PM" / "PM_bn7",
                 "mask_dir_a": base_dir / "train_PM" / "PM_b5_2",
                 "mask_dir_b": base_dir / "train_PM" / "PM_b4_5",
-                "indices_dir": base_dir / "train" / "indices",
             }
         elif split == "val":
             return {
-                "image_dir": base_dir / "val" / "img",
-                "mask_dir": base_dir / "val" / "mask",
                 "indices_dir": base_dir / "val" / "img" / "indices",
+                "mask_dir": base_dir / "val" / "mask",
             }
         else:  # test
             return {
-                "image_dir": base_dir / "test" / "img",
-                "mask_dir": base_dir / "test" / "mask",
                 "indices_dir": base_dir / "test" / "img" / "indices",
+                "mask_dir": base_dir / "test" / "mask",
             }
+
+    def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
+        # Extract label from filename, e.g., "a_b_c_d.png"
+        parts = fname.split("_")
+        if len(parts) < 4:
+            return None
+        try:
+            label = torch.tensor([int(parts[i]) for i in range(4)], dtype=torch.int64)
+            return label
+        except (ValueError, IndexError):
+            return None
 
     def _load_items(self) -> List[Dict]:
         items = []
-        image_extensions = (".png", ".jpg", ".jpeg")
-        for fname in os.listdir(self.dirs["image_dir"]):
-            if fname.startswith(".") or not fname.lower().endswith(image_extensions):
+        indices_extensions = (".pt",)
+        for fname in os.listdir(self.dirs["indices_dir"]):
+            if fname.startswith(".") or not fname.lower().endswith(indices_extensions):
                 continue
-            image_path = self.dirs["image_dir"] / fname
-            mask_path = self.dirs["mask_dir"] / fname
+            indices_path = self.dirs["indices_dir"] / fname
+            mask_path = self.dirs["mask_dir"] / fname.replace(".pt", ".png")
             if not mask_path.exists():
-                print(f"Warning: Mask not found for {image_path}, skipping...")
+                print(f"Warning: Mask not found for {indices_path}, skipping...")
                 continue
-            item = {"image_path": image_path, "mask_path": mask_path}
-            if self.use_indices:
-                indices_path = self.dirs["indices_dir"] / f"{fname}.pt"
-                if not indices_path.exists():
-                    print(f"Warning: Indices not found for {image_path}, skipping...")
-                    continue
-                item["indices_path"] = indices_path
+            item = {"indices_path": indices_path, "mask_path": mask_path}
             if self.split == "train":
-                mask_path_a = self.dirs["mask_dir_a"] / fname
-                mask_path_b = self.dirs["mask_dir_b"] / fname
+                mask_path_a = self.dirs["mask_dir_a"] / fname.replace(".pt", ".png")
+                mask_path_b = self.dirs["mask_dir_b"] / fname.replace(".pt", ".png")
                 if not mask_path_a.exists() or not mask_path_b.exists():
-                    print(f"Warning: Additional masks not found for {image_path}, skipping...")
+                    print(f"Warning: Additional masks not found for {indices_path}, skipping...")
                     continue
                 item["mask_path_a"] = mask_path_a
                 item["mask_path_b"] = mask_path_b
-                label = self._extract_label(fname)
+                label = self._extract_label(fname.replace(".pt", ".png"))
                 if label is not None:
                     item["class_label"] = label
                 else:
@@ -423,15 +422,14 @@ class Stage2IndiceDataset(BaseImageDataset):
             items.append(item)
         return items
 
+    def __len__(self) -> int:
+        return len(self.items)
+
     def __getitem__(self, index: int) -> Dict:
         item = self.items[index]
         try:
-            if self.use_indices:
-                indices = torch.load(item["indices_path"])  # [28, 28]
-                sample = {"indices": indices}
-            else:
-                image = Image.open(item["image_path"]).convert("RGB")
-                sample = {"image": image}
+            indices = torch.load(item["indices_path"])  # [28, 28]
+            sample = {"indices": indices}
             mask = Image.open(item["mask_path"]) if item["mask_path"].exists() else None
             sample["label"] = mask
             if self.split == "train":
@@ -439,15 +437,11 @@ class Stage2IndiceDataset(BaseImageDataset):
                 sample["label_b"] = Image.open(item["mask_path_b"]) if item["mask_path_b"].exists() else None
                 sample["class_label"] = item["class_label"]
             elif self.split in ["val", "test"]:
-                sample["image_path"] = str(item["image_path"])
+                sample["image_path"] = str(item["indices_path"]).replace("indices", "img").replace(".pt", ".png")
         except Exception as e:
             raise RuntimeError(f"Failed to load item {item}: {e}")
 
-        if self.transform:
-            sample = self.transform(sample)
-        return sample 
-
-
+        return sample
 
 def create_indice_dataloaders(
     dataroot: str,
