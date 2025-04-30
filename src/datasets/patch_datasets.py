@@ -501,15 +501,10 @@ class Stage2IndiceDataset(Dataset):
                 "mask_dir_a": masks_base / "train_PM" / "PM_b5_2",
                 "mask_dir_b": masks_base / "train_PM" / "PM_b4_5",
             }
-        elif split == "val":
+        elif split == "val" or split == "test": 
             return {
-                "indices_dir": indices_base / "val" / "indices",
-                "mask_dir": masks_base / "val" / "mask",
-            }
-        else:  # test
-            return {
-                "indices_dir": indices_base / "test" / "indices",
-                "mask_dir": masks_base / "test" / "masks",  # Updated to test/masks
+                "indices_dir": indices_base / split / "indices",
+                "mask_dir": masks_base / split / "mask",
             }
 
     def _extract_label(self, fname: str) -> Optional[torch.Tensor]:
