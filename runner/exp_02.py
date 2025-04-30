@@ -14,7 +14,7 @@ print(f"Project root added to sys.path: {PROJECT_ROOT}")
 sys.path.append(PROJECT_ROOT)
 sys.path.append(os.path.join(PROJECT_ROOT, "src", "includes", "taming-transformers")) 
 
-from utils import load_config, load_vqgan  # Placeholder for your VQ-GAN loading code
+from utils import load_config  # Placeholder for your VQ-GAN loading code
 from src.datasets import create_dataloaders
 from model import VQGANViTClassifier
 from utils.train import train 
